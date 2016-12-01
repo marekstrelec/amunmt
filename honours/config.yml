@@ -1,0 +1,24 @@
+# Paths are relative to config file location
+relative-paths: yes
+
+# performance settings
+beam-size: 12
+devices: [0]
+normalize: yes
+cpu-threads: 2
+gpu-threads: 0
+
+# scorer configuration
+scorers:
+  F0:
+    path: ../build/model.cs-en.npz
+    type: Nematus
+bpe: csen.bpe
+
+# scorer weights
+weights:
+  F0: 1.0
+
+# vocabularies
+source-vocab: vocab.cs.json
+target-vocab: vocab.en.json
