@@ -78,3 +78,10 @@ _Inline
 *.pyc
 *.pdf
 *.tgz
+
+
+# other
+*.xml
+*.iml
+*.json
+*.yml

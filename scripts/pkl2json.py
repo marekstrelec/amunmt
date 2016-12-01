@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-import cPickle
+import _pickle as cPickle
 import json
 import operator
 
