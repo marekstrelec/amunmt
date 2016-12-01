@@ -14,7 +14,7 @@
 
 // histogram
 #include "common/vocab.h"
-#include <fstream>
+#include "3rd_party/spdlog/sinks/file_sinks.h"
 
 
 using namespace std;
@@ -34,8 +34,6 @@ namespace CPU {
             const float* data_;
         };
 
-        ofstream out_hist;
-
 /////////////////////////////////////////////////////////////////////
         void ArrayMatrix::BestHyps(Beam& bestHyps,
                                    const Beam& prevHyps,
@@ -48,8 +46,10 @@ namespace CPU {
         {
             using namespace mblas;
 
-            // open file for appending scores to the end of the file
-            out_hist.open("histogram.out", ios::app);
+            // create a thread safe sink which will keep its file to max of 10MB and max of 20 rotated files.
+            auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/histogram", "out", 1048576 * 10, 20);
+            auto histolog = std::make_shared<spdlog::logger>("histogram", sink);
+            histolog->set_pattern("%v");
 
             auto& weights = God::GetScorerWeights();
 
@@ -118,7 +118,7 @@ namespace CPU {
 
                 // print scores for histogram
                 // out_hist << i << "\t" << hypIndex << "\t\t" << bestCosts[i] << " - " << wordIndex <<  " = " << God::GetTargetVocab().operator[](wordIndex) <<  endl;
-                out_hist << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i] << endl;
+                histolog->info() << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i];
 
 
                 HypothesisPtr hyp;
@@ -162,8 +162,6 @@ namespace CPU {
                 bestHyps.push_back(hyp);
             }
 
-
-            out_hist.close();
         }
 
 
