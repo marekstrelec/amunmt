@@ -117,7 +117,6 @@ namespace CPU {
                 float cost = bestCosts[i];
 
                 // print scores for histogram
-                // out_hist << i << "\t" << hypIndex << "\t\t" << bestCosts[i] << " - " << wordIndex <<  " = " << God::GetTargetVocab().operator[](wordIndex) <<  endl;
                 histolog->info() << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i];
 
 

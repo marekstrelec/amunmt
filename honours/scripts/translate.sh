@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BUILD_DIR=/home/marekstrelec/codes/amunmt/build
+BUILD_DIR=/Development/Uni/4.year/honours/amunmt/build
 
 # this sample script translates a test set, including
 # preprocessing (tokenization, truecasing, and subword segmentation),
@@ -16,7 +16,7 @@ SRC=cs
 TRG=en
 
 # path to moses decoder: https://github.com/moses-smt/mosesdecoder
-mosesdecoder=/home/marekstrelec/codes/mosesdecoder
+mosesdecoder=/Development/Uni/4.year/honours/mosesdecoder
 
 # path to subword segmentation scripts: https://github.com/rsennrich/subword-nmt
 
@@ -30,7 +30,7 @@ $mosesdecoder/scripts/tokenizer/tokenizer.perl -l $SRC -a | \
 $mosesdecoder/scripts/recaser/truecase.perl -model $BUILD_DIR/truecase-model.$SRC | \
 # translate
 
-$BUILD_DIR/bin/amun -c config.yml
+$BUILD_DIR/bin/amun -c config.yml | \
 
 # postprocess
 $mosesdecoder/scripts/recaser/detruecase.perl | \
