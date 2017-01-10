@@ -11,14 +11,14 @@ gpu-threads: 0
 # scorer configuration
 scorers:
   F0:
-    path: ../../build/model.cs-en.npz
+    path: ../../build/model.en-ru.npz
     type: Nematus
-bpe: ../data/csen.bpe
+bpe: ../data/enru/enru.bpe
 
 # scorer weights
 weights:
   F0: 1.0
 
 # vocabularies
-source-vocab: ../data/vocab.cs.json
-target-vocab: ../data/vocab.en.json
+source-vocab: ../data/enru/vocab.en.json
+target-vocab: ../data/enru/vocab.ru.json

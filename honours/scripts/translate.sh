@@ -1,6 +1,15 @@
 #!/bin/sh
 
-BUILD_DIR=/Development/Uni/4.year/honours/amunmt/build
+set -u
+set -e
+
+if [ -z "$HONOURS_DIR" ]; then
+	echo "Variable HONOURS_DIR not set!"
+	exit 0
+fi
+
+BUILD_DIR="$HONOURS_DIR"/amunmt/build
+echo $BUILD_DIR
 
 # this sample script translates a test set, including
 # preprocessing (tokenization, truecasing, and subword segmentation),
@@ -10,13 +19,25 @@ BUILD_DIR=/Development/Uni/4.year/honours/amunmt/build
 # the run "./translate.sh < input_file > output_file"
 
 # suffix of source language
-SRC=cs
+if [ -z "$1" ]; then
+	echo "Source language not specified!"
+	exit 0
+fi
+
+SRC="$1"
+echo "SRC=$1"
 
 # suffix of target language
-TRG=en
+if [ -z "$1" ]; then
+        echo "Target language not specified!"
+        exit 0
+fi
+
+TRG="$2"
+echo "TRG=$2"
 
 # path to moses decoder: https://github.com/moses-smt/mosesdecoder
-mosesdecoder=/Development/Uni/4.year/honours/mosesdecoder
+mosesdecoder="$HONOURS_DIR"/mosesdecoder
 
 # path to subword segmentation scripts: https://github.com/rsennrich/subword-nmt
 
@@ -30,7 +51,7 @@ $mosesdecoder/scripts/tokenizer/tokenizer.perl -l $SRC -a | \
 $mosesdecoder/scripts/recaser/truecase.perl -model $BUILD_DIR/truecase-model.$SRC | \
 # translate
 
-$BUILD_DIR/bin/amun -c config.yml | \
+$BUILD_DIR/bin/amun -c config-"$1""$2".yml | \
 
 # postprocess
 $mosesdecoder/scripts/recaser/detruecase.perl | \
