@@ -74,7 +74,11 @@ def main():
     with open(sys.argv[1], "r") as f:
         for line in f:
             line = line.strip()
-            wid, word, cost = line.split('\t', 2)
+            
+            if line == "$$$$$":
+                continue
+
+            wid, cost, word = line.split('\t', 2)
             freq[wid].append(float(cost))
 
     # plot_count_histogram(freq)

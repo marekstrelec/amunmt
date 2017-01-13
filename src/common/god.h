@@ -9,6 +9,8 @@
 #include "common/types.h"
 #include "common/processor/processor.h"
 
+#include "3rd_party/spdlog/sinks/file_sinks.h"
+
 class Weights;
 class Vocab;
 class Filter;
@@ -56,6 +58,14 @@ class God {
 
     void LoadWeights(const std::string& path);
 
+    static void WriteLog(std::string filename, std::string text) {
+        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 100, 1000);
+        auto histolog = std::make_shared<spdlog::logger>(filename, sink);
+        histolog->set_pattern("%v");
+
+        histolog->info() << text;
+    }
+
   private:
     God& NonStaticInit(int argc, char** argv);
 
@@ -82,4 +92,5 @@ class God {
     std::shared_ptr<spdlog::logger> progress_;
 
     std::unique_ptr<InputFileStream> inputStream_;
+
 };

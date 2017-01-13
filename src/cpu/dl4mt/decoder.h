@@ -1,9 +1,15 @@
 #pragma once
 
+#include <queue>
+#include <vector>
+#include <algorithm>
+
 #include "../mblas/matrix.h"
 #include "model.h"
 #include "gru.h"
 #include "common/god.h"
+
+#include "common/vocab.h"
 
 namespace CPU {
 
@@ -163,6 +169,8 @@ class Decoder {
         filtered_(false)
         {}
 
+
+
         void GetProbs(mblas::ArrayMatrix& Probs,
                   const mblas::Matrix& State,
                   const mblas::Matrix& Embedding,
@@ -186,6 +194,27 @@ class Decoder {
             Probs_ = t * FilteredW4_;
             AddBiasVector<byRow>(Probs_, FilteredB4_);
           }
+
+//            God::GetSourceVocab(0).size() << " <=> " << God::GetTargetVocab().size();
+//            God::WriteLog("histogram_in", "-------------------");
+//
+//            WriteLogMatrixSize(Probs, "Probs");
+//            WriteLogMatrix(Probs);
+//
+//            WriteLogMatrixSize(State, "State");
+//            WriteLogMatrix(State);
+//
+//            WriteLogMatrixSize(Embedding, "Embedding");
+//            WriteLogMatrix(Embedding);
+//
+//            WriteLogMatrixSize(AlignedSourceContext, "AlignedSourceContext");
+//            WriteLogMatrix(AlignedSourceContext);
+//
+//            WriteLogMatrixSize(Probs_, "Probs_");
+
+            // dump all scores
+            WriteLogBestScores(Probs_, 12);
+
           mblas::Softmax(Probs_);
           Probs = blaze::forEach(Probs_, Log());
         }
@@ -208,6 +237,69 @@ class Decoder {
         mblas::Matrix T2_;
         mblas::Matrix T3_;
         mblas::Matrix Probs_;
+
+        static void WriteLogMatrix(mblas::ArrayMatrix mat) {
+            size_t rows = mat.rows();
+            size_t cols = mat.columns();
+            std::stringstream ss;
+            for (int j = 0; j < rows; ++j) {
+                ss.str("   ");
+                for (int i = 0; i < 4; ++i) {
+                    ss << mat(j, i) << " ";
+                }
+                God::WriteLog("histogram_in", ss.str());
+            }
+        }
+
+        static void WriteLogMatrixSize(mblas::ArrayMatrix mat, const char* label) {
+            std::stringstream ss;
+            ss << label << ": " << mat.rows() << " x " << mat.columns();
+            God::WriteLog("histogram_in", ss.str());
+            ss.str(std::string());
+        }
+
+        static void WriteLogAllScores(mblas::ArrayMatrix mat) {
+            size_t rows = mat.rows();
+            size_t cols = mat.columns();
+
+            std::stringstream ss;
+            ss.str(std::string());
+            for (int i = 0; i < rows; ++i) {
+                for (int j = 0; j < God::GetTargetVocab().size(); ++j) {
+                    ss << mat(i, j) << "\t" << God::GetTargetVocab()[j] << "\n";
+
+                }
+            }
+
+            God::WriteLog("histogram_in", ss.str());
+        }
+
+        static void WriteLogBestScores(mblas::ArrayMatrix mat, int beamSize) {
+            size_t rows = mat.rows();
+            size_t cols = mat.columns();
+
+            std::stringstream ss;
+            ss.str(std::string());
+            for (int i = 0; i < rows; ++i) {
+                std::priority_queue<std::pair<double, int>> q;
+                for (int j = 0; j < God::GetTargetVocab().size(); ++j) {
+                    q.push(std::pair<double, int>(mat(i, j), j));
+                }
+
+                int bsize = beamSize;
+                if (q.size() < beamSize) {
+                    bsize = q.size();
+                }
+                for (int b = 0; b < bsize; ++b) {
+                    int ki = q.top().second;
+                    ss << ki << "\t" << mat(i, ki) << "\t" << God::GetTargetVocab()[ki] << "\n";
+                    q.pop();
+                }
+            }
+            ss << "$$$$$";
+            God::WriteLog("histogram_in", ss.str());
+        }
+
     };
 
   public:

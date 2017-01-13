@@ -9,7 +9,6 @@ if [ -z "$HONOURS_DIR" ]; then
 fi
 
 BUILD_DIR="$HONOURS_DIR"/amunmt/build
-echo $BUILD_DIR
 
 # this sample script translates a test set, including
 # preprocessing (tokenization, truecasing, and subword segmentation),
@@ -25,7 +24,6 @@ if [ -z "$1" ]; then
 fi
 
 SRC="$1"
-echo "SRC=$1"
 
 # suffix of target language
 if [ -z "$1" ]; then
@@ -34,7 +32,6 @@ if [ -z "$1" ]; then
 fi
 
 TRG="$2"
-echo "TRG=$2"
 
 # path to moses decoder: https://github.com/moses-smt/mosesdecoder
 mosesdecoder="$HONOURS_DIR"/mosesdecoder

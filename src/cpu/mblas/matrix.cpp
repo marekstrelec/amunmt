@@ -46,11 +46,6 @@ namespace CPU {
         {
             using namespace mblas;
 
-            // create a thread safe sink which will keep its file to max of 10MB and max of 20 rotated files.
-            auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/histogram", "out", 1048576 * 10, 20);
-            auto histolog = std::make_shared<spdlog::logger>("histogram", sink);
-            histolog->set_pattern("%v");
-
             auto& weights = God::GetScorerWeights();
 
             mblas::ArrayMatrix& Probs = static_cast<mblas::ArrayMatrix&>(*ProbsEnsemble[0]);
@@ -117,8 +112,9 @@ namespace CPU {
                 float cost = bestCosts[i];
 
                 // print scores for histogram
-                histolog->info() << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i];
-
+                std::stringstream ss;
+                ss << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i];
+                God::WriteLog("histogram_out", ss.str());
 
                 HypothesisPtr hyp;
                 if (returnAlignment) {

@@ -78,8 +78,15 @@ History Search::Decode(const Sentence& sentence) {
 
     bool returnAlignment = God::Get<bool>("return-alignment");
 
+    // BestHyps gets the top n(beam-seach) hypothesis
     firstMatrix.BestHyps(hyps, prevHyps, probs, beamSize, history, scorers_, filterIndices_, returnAlignment);
     history.Add(hyps, history.size() == maxLength);
+
+//    for (auto& hyp : hyps) {
+//      God::GetTargetVocab()[hyp->GetWord()];
+//      hyp->GetPrevHyp()
+//    }
+
 
     Beam survivors;
     for (auto h : hyps) {
