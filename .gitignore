@@ -86,3 +86,5 @@ tmp/
 *.iml
 *.ipynb
 *.pickle
+
+*.png

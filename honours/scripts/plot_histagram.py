@@ -8,6 +8,7 @@ import _pickle as cpickle
 from matplotlib import pyplot as pl
 from collections import defaultdict, Counter
 from IPython import embed
+from scipy.stats.stats import pearsonr
 
 
 def split_array(arr, a=30, b=500):
@@ -57,7 +58,7 @@ def plot_histogram(freq):
     b = 600
     rare_keys, normal_keys, frequent_keys = split_array(list(freq.values()), a=a, b=b)
 
-    fig = pl.figure()
+    fig = pl.figure(1)
     ax = fig.add_subplot(111)
     ax.set_title("Score distribution")
     ax.set_xlabel("Score")
@@ -74,7 +75,7 @@ def plot_histogram(freq):
     pl.legend(loc="upper left")
     fig.show()
 
-    input()
+    # input()
     # fig.savefig("histogram.png")
 
 
@@ -90,25 +91,37 @@ def plot_distribution_ranges(freq):
         means[k] = np.mean(freq_ranges[k])
         stds[k] = np.std(freq_ranges[k])
 
-    fig = pl.figure(1)
+    fig = pl.figure(2)
     ax = fig.add_subplot(111)
     ax.set_title("Mean distribution")
     ax.set_xlabel("Frequency (x{0})".format(step))
     ax.set_ylabel("Mean")
-    pl.plot(list(means.keys()), list(means.values()), 'bo')
+    x = list(means.keys())
+    y = list(means.values())
+    pl.plot(x, y, 'bo')
     fig.show()
 
-    fig2 = pl.figure(2)
+    pcoeff_mean, pval_mean = pearsonr(np.array(x), np.array(y))
+
+    fig2 = pl.figure(3)
     ax2 = fig2.add_subplot(111)
     ax2.set_title("Standard deviation distribution")
     ax2.set_xlabel("Frequency (x{0})".format(step))
     ax2.set_ylabel("Standard deviation")
-    pl.plot(list(stds.keys()), list(stds.values()), 'ro')
+    x = list(stds.keys())
+    y = list(stds.values())
+    pl.plot(x, y, 'ro')
 
     fig2.show()
 
-    input()
+    pcoeff_std, pval_std = pearsonr(np.array(x), np.array(y))
+
+    print("Mean:\nPearson correlation coefficient: {0}\nP-value: {1}\n".format(pcoeff_mean, pval_mean))
+    print("Std:\nPearson correlation coefficient: {0}\nP-value: {1}\n".format(pcoeff_std, pval_std))
+
+    # input()
     # embed()
+
 
 def main():
     freq = defaultdict(list)
@@ -140,7 +153,9 @@ def main():
             cpickle.dump(freq, f)
 
     plot_histogram(freq)
-    # plot_distribution_ranges(freq)
+    plot_distribution_ranges(freq)
+
+    input()
 
 
 if __name__ == "__main__":
