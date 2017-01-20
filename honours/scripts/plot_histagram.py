@@ -45,6 +45,10 @@ def expand_freq(freq):
 
 
 def add_histogram(xs, label, bin_factor=2):
+    if len(xs) == 0:
+        print("No data points for: \"{0}\" - skipping.".format(label))
+        return
+
     print("{0}: {1} with mean: {2} and std: {3}".format(label, str(len(xs)), np.mean(xs), np.std(xs)))
 
     from_bin = math.floor(np.min(xs))
@@ -135,7 +139,7 @@ def main():
         with open(pickle_file, 'rb') as f:
             freq = cpickle.load(f)
     else:
-        embed()
+        #embed()
         print('No pickle file found. Loading data...')
         with open(sys.argv[1], "r") as f:
             for line in f:
