@@ -26,7 +26,7 @@ fi
 if [ -z "$2" ]; then
         echo "output_file path not specified!"
 
-	output_file="../out/output.out"
+	output_file="out/output.out"
 	while true; do
     	read -p "Do you want to use $output_file ?" yn
     	case $yn in

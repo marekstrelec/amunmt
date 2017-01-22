@@ -29,9 +29,10 @@ def split_array(arr, a=30, b=500):
 
 def get_freq_ranges(freq, step):
     values = defaultdict(list)
-    for v in freq:
+    for k in freq:
+        v = freq[k]
         d = len(v) // step
-        values[d].extend(v)
+        values[d].extend([(v, k) for v in v])
 
     return values
 
@@ -86,14 +87,18 @@ def plot_histogram(freq):
 def plot_distribution_ranges(freq):
     step = 100
     print('Plotting distribution ranges...')
-    freq_ranges = get_freq_ranges(list(freq.values()), step)
+    freq_ranges = get_freq_ranges(freq, step)
 
     means = {}
     stds = {}
 
     for k in freq_ranges:
-        means[k] = np.mean(freq_ranges[k])
-        stds[k] = np.std(freq_ranges[k])
+        vals = [v for (v,k) in freq_ranges[k]]
+        means[k] = np.mean(vals)
+        stds[k] = np.std(vals)
+
+        # if means[k] > 10:
+        #     print(freq_ranges[k][0][1])
 
     fig = pl.figure(2)
     ax = fig.add_subplot(111)
@@ -129,7 +134,8 @@ def plot_distribution_ranges(freq):
 
 def main():
     freq = defaultdict(list)
-    pickle_file = 'histodata.pickle'
+    vocab = dict()
+    pickle_file = os.path.basename(sys.argv[1]) + ".pickle"
     if len(sys.argv) < 2:
         raise Exception("Path to histogram data not specified!")
 
@@ -137,7 +143,7 @@ def main():
         # load freq from pickle
         print('Loading data from a pickle file...')
         with open(pickle_file, 'rb') as f:
-            freq = cpickle.load(f)
+            freq, vocab = cpickle.load(f)
     else:
         #embed()
         print('No pickle file found. Loading data...')
@@ -151,10 +157,19 @@ def main():
                 wid, cost, word = line.split('\t', 2)
                 freq[wid].append(float(cost))
 
+                # memorise wordid to word link
+                if wid not in vocab:
+                    vocab[wid] = word
+
         # save freq to pickle
         print('Saving data to a pickle file...')
         with open(pickle_file, 'wb') as f:
-            cpickle.dump(freq, f)
+            cpickle.dump((freq, vocab), f)
+
+    # remove special characters
+    # 0: </s>, 1: UNK, 2: .
+    # freq.pop('0', None)
+    # vocab.pop('0', None)
 
     plot_histogram(freq)
     plot_distribution_ranges(freq)
