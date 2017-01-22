@@ -1,3 +1,4 @@
 < export HONOURS_DIR=~/Development/Uni/4.year/honours
 > export HONOURS_DIR=/home/marekstrelec/codes
 
+make -C ../../build -j
