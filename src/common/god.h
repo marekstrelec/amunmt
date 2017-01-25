@@ -10,6 +10,7 @@
 #include "common/processor/processor.h"
 
 #include "3rd_party/spdlog/sinks/file_sinks.h"
+#include "common/vocab.h"
 
 class Weights;
 class Vocab;
@@ -58,12 +59,32 @@ class God {
 
     void LoadWeights(const std::string& path);
 
+    static void OutputVocab() {
+        std::stringstream ss;
+        for (int i = 0; i < GetTargetVocab().size(); ++i) {
+//            if (i == 3349 || i == 3448) // { and } characters are not friends with spdlog
+//                continue;
+
+            ss.str(std::string());
+            ss << i <<  "\t" << GetTargetVocab().operator[](i);
+
+            try {
+                God::WriteLog("vocab_words", ss.str());
+            } catch (const std::exception& e) {
+                ss.str(std::string());
+                ss << i << " ERROR";
+                God::WriteLog("vocab_words", ss.str());
+            }
+        }
+    }
+
     static void WriteLog(std::string filename, std::string text) {
-        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 100, 1000);
+        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 100, 5000);
         auto histolog = std::make_shared<spdlog::logger>(filename, sink);
         histolog->set_pattern("%v");
 
         histolog->info() << text;
+
     }
 
   private:

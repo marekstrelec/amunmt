@@ -22,6 +22,9 @@ size_t Search::MakeFilter(const Words& srcWords, const size_t vocabSize) {
 History Search::Decode(const Sentence& sentence) {
   boost::timer::cpu_timer timer;
 
+  // dumb all words from the target vocab
+  // God::OutputVocab();
+
   size_t beamSize = God::Get<size_t>("beam-size");
   bool normalize = God::Get<bool>("normalize");
 

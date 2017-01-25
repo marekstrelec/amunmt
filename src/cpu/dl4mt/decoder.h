@@ -10,6 +10,8 @@
 #include "common/god.h"
 
 #include "common/vocab.h"
+#include <math.h>
+
 
 namespace CPU {
 
@@ -213,7 +215,7 @@ class Decoder {
 //            WriteLogMatrixSize(Probs_, "Probs_");
 
             // dump all scores
-            WriteLogBestScores(Probs_, 12);
+            WriteLogAllScores(Probs_);
 
           mblas::Softmax(Probs_);
           Probs = blaze::forEach(Probs_, Log());
@@ -266,11 +268,10 @@ class Decoder {
             ss.str(std::string());
             for (int i = 0; i < rows; ++i) {
                 for (int j = 0; j < God::GetTargetVocab().size(); ++j) {
-                    ss << mat(i, j) << "\t" << God::GetTargetVocab()[j] << "\n";
-
+                    ss << j << "\t" << roundf(mat(i, j)*1000)/1000 << "\n";
                 }
             }
-
+//            ss << "$$$$$";
             God::WriteLog("histogram_in", ss.str());
         }
 

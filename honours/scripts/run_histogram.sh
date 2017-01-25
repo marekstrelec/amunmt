@@ -45,6 +45,8 @@ if [ -f "$output_file" ] ; then
     rm "$output_file"
 fi
 
+rm -R -f ./out
+mkdir ./out
 time make -C ../../build -j
 time ./translate.sh cs en < "$input_file" > "$output_file"
 cat "$output_file"

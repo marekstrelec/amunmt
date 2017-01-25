@@ -88,3 +88,6 @@ tmp/
 *.pickle
 
 *.png
+cmake-build-debug/
+
+honours/scripts/results/

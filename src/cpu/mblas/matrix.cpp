@@ -112,9 +112,9 @@ namespace CPU {
                 float cost = bestCosts[i];
 
                 // print scores for histogram
-                std::stringstream ss;
-                ss << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i];
-                God::WriteLog("histogram_out", ss.str());
+//                std::stringstream ss;
+//                ss << wordIndex <<  "\t" << God::GetTargetVocab().operator[](wordIndex) << "\t" << bestCosts[i];
+//                God::WriteLog("histogram_out", ss.str());
 
                 HypothesisPtr hyp;
                 if (returnAlignment) {
