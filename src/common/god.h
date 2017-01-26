@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <iostream>
+#include <random>
 
 #include "common/config.h"
 #include "common/loader.h"
@@ -79,12 +80,27 @@ class God {
     }
 
     static void WriteLog(std::string filename, std::string text) {
-        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 1000, 5000);
+        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 1500, 5000);
         auto histolog = std::make_shared<spdlog::logger>(filename, sink);
         histolog->set_pattern("%v");
 
         histolog->info() << text;
+    }
 
+    static std::string randomStrGen() {
+        char digits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+
+        std::random_device r;
+        std::seed_seq seed{r(), r(), r(), r(), r(), r(), r(), r()};
+        std::shuffle(std::begin(digits), std::end(digits),
+                     std::mt19937(seed));
+
+        std::stringstream ss;
+        for (char c : digits) {
+            ss <<  c;
+        }
+
+        return ss.str();
     }
 
   private:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# python ./parallel_onepass.py experiments_onepass
 
 import glob
 import numpy as np
@@ -6,6 +7,7 @@ import os
 import pickle
 import shutil
 import sys
+from multiprocessing import Pool
 from time import gmtime, strftime
 
 
@@ -26,55 +28,59 @@ def recreate_folder(folder_path):
         os.makedirs(folder_path)
 
 
-def model_distribution():
+def model_distribution(processes):
     log('modeling distribution...')
-    perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'))
+    perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
     merge_parallel_data(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'))
     log('Done.')
 
 
-def perform_one_pass_variance(input_folder, result_folder):
-    def online_variance(file_path):
-        mean_var = {}
+def online_variance(enumerated_file_path):
+    file_idx, file_path = enumerated_file_path
+    mean_var = {}
 
-        with open(file_path, 'r') as f:
-            for line in f:
-                line = line.strip()
+    with open(file_path, 'r') as f:
+        for line in f:
+            line = line.strip()
 
-                if not len(line) or line == "$$$$$":
-                    continue
+            if not len(line) or line == "$$$$$":
+                continue
 
-                wid, score = line.split('\t', 1)
-                if wid not in mean_var:
-                    mean_var[wid] = {
-                        'mean': 0.0,
-                        'size': 0,
-                        'm2': 0.0
-                    }
+            wid, score = line.split('\t', 1)
+            if wid not in mean_var:
+                mean_var[wid] = {
+                    'mean': 0.0,
+                    'size': 0,
+                    'm2': 0.0
+                }
 
-                mean_var[wid]['size'] += 1
-                delta = float(score) - mean_var[wid]['mean']
-                mean_var[wid]['mean'] += delta / float(mean_var[wid]['size'])
-                delta2 = float(score) - mean_var[wid]['mean']
-                mean_var[wid]['m2'] += delta * delta2
+            mean_var[wid]['size'] += 1
+            delta = float(score) - mean_var[wid]['mean']
+            mean_var[wid]['mean'] += delta / float(mean_var[wid]['size'])
+            delta2 = float(score) - mean_var[wid]['mean']
+            mean_var[wid]['m2'] += delta * delta2
 
-        for key in mean_var:
-            if mean_var[key]['size'] < 2:
-                mean_var[key]['m2'] = None
-            else:
-                mean_var[key]['m2'] /= float(mean_var[key]['size'])
-                # mean_var[key]['m2'] = mean_var[key]['m2']**(1/2)
+    for key in mean_var:
+        if mean_var[key]['size'] < 2:
+            mean_var[key]['m2'] = None
+        else:
+            mean_var[key]['m2'] /= float(mean_var[key]['size'])
 
-        return mean_var
+    log("processed({0})".format(file_idx))
+    return file_idx, mean_var
 
+
+def perform_one_pass_variance(input_folder, result_folder, processes):
     recreate_folder(result_folder)
     listedfiles = get_all_files_in_path(input_folder, 'out')
 
-    # produce a pickle file for each input file containing mean information
-    for idx, f in enumerate(listedfiles):
-        log("processing [{0}/{1}]".format(idx + 1, len(listedfiles)))
-        mean_var = online_variance(f)
-        pickle_filepath = os.path.join(result_folder, str(idx) + '.pickle')
+    p = Pool(processes=processes)
+    results = p.map(online_variance, list(enumerate(listedfiles)))
+
+    for r in results:
+        file_idx = r[0]
+        mean_var = r[1]
+        pickle_filepath = os.path.join(result_folder, str(file_idx) + '.pickle')
         with open(pickle_filepath, 'wb+') as f:
             pickle.dump(mean_var, f)
 
@@ -143,4 +149,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise Exception("Path to input data not specified!")
 
-    model_distribution()
+    model_distribution(processes=5)

@@ -272,7 +272,7 @@ class Decoder {
                 }
             }
             ss << "$$$$$";
-            God::WriteLog("histogram_in", ss.str());
+            God::WriteLog("histogram_in" + God::randomStrGen(), ss.str());
         }
 
         static void WriteLogBestScores(mblas::ArrayMatrix mat, int beamSize) {
