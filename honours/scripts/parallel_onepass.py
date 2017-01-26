@@ -23,7 +23,16 @@ def get_all_files_in_path(path, extension):
 
 def recreate_folder(folder_path):
     if os.path.exists(folder_path):
-        shutil.rmtree(folder_path)
+        yes = set(['yes','y', 'ye', ''])
+        no = set(['no','n'])
+
+        while(True):
+            choice = raw_input("A folder exists. Do you want to delete {0}? [Y/n] ".format(folder_path)).lower()
+            if choice in yes:
+	        shutil.rmtree(folder_path)
+                break
+            elif choice in no:
+                break
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
 
@@ -31,6 +40,7 @@ def recreate_folder(folder_path):
 def model_distribution(processes):
     log('modeling distribution...')
     perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
+    log('merging data...')
     merge_parallel_data(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'))
     log('Done.')
 
@@ -38,6 +48,9 @@ def model_distribution(processes):
 def online_variance(params):
     file_idx, file_path, result_folder = params
     mean_var = {}
+    pickle_filepath = os.path.join(result_folder, str(file_idx) + '.pickle')
+    if os.path.exists(pickle_filepath):
+	return
 
     with open(file_path, 'r') as f:
         for line in f:
@@ -64,7 +77,6 @@ def online_variance(params):
         if mean_var[key]['size'] > 0:
             mean_var[key]['m2'] /= float(mean_var[key]['size'])
 
-    pickle_filepath = os.path.join(result_folder, str(file_idx) + '.pickle')
     with open(pickle_filepath, 'wb+') as f:
         pickle.dump(mean_var, f)
     log("processed({0})".format(file_idx))
@@ -85,27 +97,29 @@ def merge_parallel_data(input_folder, result_folder):
 
     merged = {}
     for idx, f in enumerate(listedfiles):
-            with open(f, 'rb') as f:
-                mean_var = pickle.load(f)
-                # print(mean_var)
+        with open(f, 'rb') as f:
+            mean_var = pickle.load(f)
+            # print(mean_var)
 
-                for k in sorted(mean_var.keys()):
-                    # print(k)
-                    if k not in merged:
-                        merged[k] = {
-                            'count': mean_var[k]['size'],
-                            'mean': mean_var[k]['mean'],
-                            'm2': mean_var[k]['m2']
-                        }
-                        continue
+            for k in sorted(mean_var.keys()):
+                # print(k)
+                if k not in merged:
+                    merged[k] = {
+                        'count': mean_var[k]['size'],
+                        'mean': mean_var[k]['mean'],
+                        'm2': mean_var[k]['m2']
+                    }
+                    continue
 
-                    count_b = mean_var[k]['size']
-                    mean_b = mean_var[k]['mean']
-                    var_b = mean_var[k]['m2']
+                count_b = mean_var[k]['size']
+                mean_b = mean_var[k]['mean']
+                var_b = mean_var[k]['m2']
 
-                    merged[k]['m2'] = parallel_variance(merged[k]['mean'], merged[k]['count'], merged[k]['m2'], mean_b, count_b, var_b)
-                    merged[k]['mean'] = (merged[k]['mean'] * merged[k]['count'] + mean_b * count_b) / float(merged[k]['count'] + count_b)
-                    merged[k]['count'] += count_b
+                merged[k]['m2'] = parallel_variance(merged[k]['mean'], merged[k]['count'], merged[k]['m2'], mean_b, count_b, var_b)
+                merged[k]['mean'] = (merged[k]['mean'] * merged[k]['count'] + mean_b * count_b) / float(merged[k]['count'] + count_b)
+                merged[k]['count'] += count_b
+
+        print('merge ({0}/{1})'.format(idx+1, len(listedfiles)))
 
     pickle_filepath = os.path.join(result_folder, 'result.pickle')
     with open(pickle_filepath, 'wb+') as f:
@@ -143,4 +157,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise Exception("Path to input data not specified!")
 
-    model_distribution(processes=5)
+    model_distribution(processes=12)
