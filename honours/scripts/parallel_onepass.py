@@ -35,8 +35,8 @@ def model_distribution(processes):
     log('Done.')
 
 
-def online_variance(enumerated_file_path):
-    file_idx, file_path = enumerated_file_path
+def online_variance(params):
+    file_idx, file_path, result_folder = params
     mean_var = {}
 
     with open(file_path, 'r') as f:
@@ -61,13 +61,13 @@ def online_variance(enumerated_file_path):
             mean_var[wid]['m2'] += delta * delta2
 
     for key in mean_var:
-        if mean_var[key]['size'] < 2:
-            mean_var[key]['m2'] = None
-        else:
+        if mean_var[key]['size'] > 0:
             mean_var[key]['m2'] /= float(mean_var[key]['size'])
 
+    pickle_filepath = os.path.join(result_folder, str(file_idx) + '.pickle')
+    with open(pickle_filepath, 'wb+') as f:
+        pickle.dump(mean_var, f)
     log("processed({0})".format(file_idx))
-    return file_idx, mean_var
 
 
 def perform_one_pass_variance(input_folder, result_folder, processes):
@@ -75,14 +75,8 @@ def perform_one_pass_variance(input_folder, result_folder, processes):
     listedfiles = get_all_files_in_path(input_folder, 'out')
 
     p = Pool(processes=processes)
-    results = p.map(online_variance, list(enumerate(listedfiles)))
-
-    for r in results:
-        file_idx = r[0]
-        mean_var = r[1]
-        pickle_filepath = os.path.join(result_folder, str(file_idx) + '.pickle')
-        with open(pickle_filepath, 'wb+') as f:
-            pickle.dump(mean_var, f)
+    params = [(n, listedfiles[n], result_folder) for n in range(len(listedfiles))]
+    p.map(online_variance, params)
 
 
 def merge_parallel_data(input_folder, result_folder):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# python ./plot_onepass_var.py bpe_vocab.pickle id_to_word_vocab.pickle experiments_onepass/result2/result.pickle
+# python ./plot_onepass_var.py ./bpe_vocab.vocab ./id_to_word_vocab.pickle.vocab experiments/result2/result.pickle
 
 import sys
 import pickle
