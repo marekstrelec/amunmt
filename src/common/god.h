@@ -79,7 +79,7 @@ class God {
     }
 
     static void WriteLog(std::string filename, std::string text) {
-        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 100, 5000);
+        auto sink = std::make_shared<spdlog::sinks::rotating_file_sink_st>("out/" + filename, "out", 1048576 * 1000, 5000);
         auto histolog = std::make_shared<spdlog::logger>(filename, sink);
         histolog->set_pattern("%v");
 

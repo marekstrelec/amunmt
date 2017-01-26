@@ -271,7 +271,7 @@ class Decoder {
                     ss << j << "\t" << roundf(mat(i, j)*1000)/1000 << "\n";
                 }
             }
-//            ss << "$$$$$";
+            ss << "$$$$$";
             God::WriteLog("histogram_in", ss.str());
         }
 

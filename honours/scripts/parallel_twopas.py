@@ -1,14 +1,13 @@
+#!/usr/bin/env python
 
-import sys
-import os
-import math
-import pickle
 import glob
+import math
+import os
+import pickle
 import shutil
-from time import gmtime, strftime
+import sys
 from collections import defaultdict
-
-from IPython import embed
+from time import gmtime, strftime
 
 
 def log(text):
@@ -24,15 +23,18 @@ def merge_list_of_dicts(list_of_dicts):
 
     return merged_dict
 
+
 def get_all_files_in_path(path, extension):
     listedfiles = [f for f in glob.glob(os.path.join(path, '*.' + extension))]
     return listedfiles
+
 
 def recreate_folder(folder_path):
     if os.path.exists(folder_path):
         shutil.rmtree(folder_path)
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
+
 
 def get_means(input_path, result_folder):
     def compute_mean_one_pass(file_path):
@@ -45,22 +47,21 @@ def get_means(input_path, result_folder):
             for line in f:
                 line = line.strip()
 
-                if line == "$$$$$":
+                if not len(line) or line == "$$$$$":
                     continue
 
                 try:
                     wid, score = line.split('\t', 1)
                 except ValueError as e:
+                    print(line)
                     error_a += 1
                     continue
-                    # embed()
 
                 try:
                     means_sum[wid] += float(score)
                 except ValueError as e:
                     error_b += 1
                     continue
-                    # embed()
 
                 means_size[wid] += 1
 
@@ -80,6 +81,7 @@ def get_means(input_path, result_folder):
         pickle_filepath = os.path.join(result_folder, str(idx)+'.pickle')
         with open(pickle_filepath, 'wb+') as f:
             pickle.dump((means_sum, means_size), f)
+
 
 def merge_means(input_path, result_folder):
     recreate_folder(result_folder)
@@ -114,23 +116,38 @@ def merge_means(input_path, result_folder):
     with open(pickle_filepath, 'wb+') as f:
         pickle.dump(merged_dict, f)
 
+
 def get_stds(input_path, means_file_path, result_folder):
     def compute_stds_one_pass(means, file_path):
         sq_stds_sum = defaultdict(int)
+
+        error_a = 0
+        error_b = 0
         with open(file_path, 'r') as f:
             for line in f:
                 line = line.strip()
 
-                if line == "$$$$$":
+                if not len(line) or line == "$$$$$":
                     continue
 
-                wid, score = line.split('\t', 1)
+                try:
+                    wid, score = line.split('\t', 1)
+                except ValueError as e:
+                    print(line)
+                    error_a += 1
+                    continue
 
                 if wid not in means:
                     raise Exception('get_stds: Inconsistent data - wid {0} not found in means'.format(wid))
 
-                diff = float(score) - means[wid]['mean']
-                sq_stds_sum[wid] += diff**2
+                try:
+                    diff = float(score) - means[wid]['mean']
+                    sq_stds_sum[wid] += diff**2
+                except ValueError as e:
+                    error_b += 1
+                    continue
+
+        print('errors {0}-{1}'.format(error_a, error_b))
 
         return sq_stds_sum
 
@@ -150,6 +167,7 @@ def get_stds(input_path, means_file_path, result_folder):
             pickle_filepath = os.path.join(result_folder, str(idx)+'.pickle')
             with open(pickle_filepath, 'wb+') as f:
                 pickle.dump(sq_stds_sum, f)
+
 
 def merge_stds(input_path, means_file_path, result_folder):
     recreate_folder(result_folder)
@@ -184,6 +202,7 @@ def merge_stds(input_path, means_file_path, result_folder):
         with open(pickle_filepath, 'wb+') as f:
             pickle.dump(merged_dict, f)
 
+
 def show_results(means_filepath, stds_filepath):
     print('----')
 
@@ -203,34 +222,20 @@ def show_results(means_filepath, stds_filepath):
     print('----')
 
 
-if __name__ == "__main__":
+def model_distribution():
     if len(sys.argv) < 2:
         raise Exception("Path to input data not specified!")
 
-    print('get_means...')
+    log('get_means...')
     get_means(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'))
-    print('merge_means...')
+    log('merge_means...')
     merge_means(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'))
-    print('get_stds...')
+    log('get_stds...')
     get_stds(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result2', 'means.pickle'), os.path.join(sys.argv[1], 'result3'))
-    print('merge_stds...')
+    log('merge_stds...')
     merge_stds(os.path.join(sys.argv[1], 'result3'), os.path.join(sys.argv[1], 'result2', 'means.pickle'), os.path.join(sys.argv[1], 'result4'))
 
-    print('show_results...')
-    show_results(os.path.join(sys.argv[1], 'result2', 'means.pickle'), os.path.join(sys.argv[1], 'result4', 'stds.pickle'))
+    log('done.')
 
-    import numpy as np
-    inp = {
-        '1': [3,5,7,7,3],
-        '2': [8,9,3,4,55],
-        '3': [4,66,2,3,23,4],
-        '4': [1,3,16],
-        '5': [4,30,9,10,22]
-    }
-
-    for k in sorted(inp.keys()):
-        print('mean {0}: {1}'.format(k, np.mean(inp[k])))
-
-    print('')
-    for k in sorted(inp.keys()):
-        print('std {0}: {1}'.format(k, np.std(inp[k])))
+if __name__ == "__main__":
+    model_distribution()
