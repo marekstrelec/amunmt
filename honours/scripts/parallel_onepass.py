@@ -39,9 +39,9 @@ def recreate_folder(folder_path):
 
 def model_distribution(processes):
     log('modeling distribution...')
-    perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
+    #perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
     log('merging data parallel...')
-    merge_data_parallel(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'), processes)
+    #merge_data_parallel(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'), processes)
     log('merging data final...')
     merge_data_final(os.path.join(sys.argv[1], 'result2'), os.path.join(sys.argv[1], 'result3'))
     log('Done.')
@@ -98,10 +98,11 @@ def perform_one_pass_variance(input_folder, result_folder, processes):
 def merge_data(param):
     i, chunk, result_folder = param
     merged = {}
-    for idx, f in enumerate(chunk):
+    for idx, pf in enumerate(chunk):
         try:
-            with open(f, 'rb') as f:
-                print('merging({0}) ({1}/{2}) - {3}'.format(i, idx + 1, len(chunk), f))
+            with open(pf, 'rb') as f:
+                if idx % 20 == 0:
+                    print('merging({0}) ({1}/{2}) - {3}'.format(i, idx + 1, len(chunk), pf))
                 mean_var = pickle.load(f)
 
                 for k in sorted(mean_var.keys()):
@@ -121,7 +122,10 @@ def merge_data(param):
                     merged[k]['mean'] = (merged[k]['mean'] * merged[k]['size'] + mean_b * size_b) / float(merged[k]['size'] + size_b)
                     merged[k]['size'] += size_b
         except EOFError:
-            print('>>>>>>> EOFError - file: {0}'.format(f))
+            print('>>>>>>> EOFError - file: {0}'.format(pf))
+            continue
+        except ValueError:
+            print('>>>>>>> ValueError - file: {0}'.format(pf))
             continue
 
     pickle_filepath = os.path.join(result_folder, str(i) + '.pickle')
@@ -181,4 +185,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise Exception("Path to input data not specified!")
 
-    model_distribution(processes=12)
+    model_distribution(processes=17)
