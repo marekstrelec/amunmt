@@ -4,6 +4,9 @@
 import sys
 import pickle
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+
 from matplotlib import pyplot as pl
 from scipy.stats.stats import pearsonr
 
@@ -21,7 +24,7 @@ def plot_distribution_ranges(means, variances):
     x = list(means.keys())
     y = list(means.values())
     pl.plot(x, y, 'bo')
-    fig.show()
+    # fig.show()
 
     pcoeff_mean, pval_mean = pearsonr(np.array(x), np.array(y))
 
@@ -35,14 +38,14 @@ def plot_distribution_ranges(means, variances):
     y = list(variances.values())
     pl.plot(x, y, 'ro')
 
-    fig2.show()
+    # fig2.show()
 
     pcoeff_std, pval_std = pearsonr(np.array(x), np.array(y))
 
     print("Mean:\nPearson correlation coefficient: {0}\nP-value: {1}\n".format(pcoeff_mean, pval_mean))
     print("Std:\nPearson correlation coefficient: {0}\nP-value: {1}\n".format(pcoeff_std, pval_std))
 
-    input()
+    # raw_input()
 
 
 def main():

@@ -40,8 +40,10 @@ def recreate_folder(folder_path):
 def model_distribution(processes):
     log('modeling distribution...')
     perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
-    log('merging data...')
+    log('merging data parallel...')
     merge_data_parallel(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'), processes)
+    log('merging data final...')
+    merge_data_final(os.path.join(sys.argv[1], 'result2'), os.path.join(sys.argv[1], 'result3'))
     log('Done.')
 
 
@@ -105,23 +107,23 @@ def merge_data(param):
                 # print(k)
                 if k not in merged:
                     merged[k] = {
-                        'count': mean_var[k]['size'],
+                        'size': mean_var[k]['size'],
                         'mean': mean_var[k]['mean'],
                         'm2': mean_var[k]['m2']
                     }
                     continue
 
-                count_b = mean_var[k]['size']
+                size_b = mean_var[k]['size']
                 mean_b = mean_var[k]['mean']
                 var_b = mean_var[k]['m2']
 
-                merged[k]['m2'] = parallel_variance(merged[k]['mean'], merged[k]['count'], merged[k]['m2'], mean_b, count_b, var_b)
-                merged[k]['mean'] = (merged[k]['mean'] * merged[k]['count'] + mean_b * count_b) / float(merged[k]['count'] + count_b)
-                merged[k]['count'] += count_b
+                merged[k]['m2'] = parallel_variance(merged[k]['mean'], merged[k]['size'], merged[k]['m2'], mean_b, size_b, var_b)
+                merged[k]['mean'] = (merged[k]['mean'] * merged[k]['size'] + mean_b * size_b) / float(merged[k]['size'] + size_b)
+                merged[k]['size'] += size_b
 
         print('merge({0}) ({1}/{2})'.format(i, idx+1, len(chunk)))
 
-    pickle_filepath = os.path.join(result_folder, 'result.pickle')
+    pickle_filepath = os.path.join(result_folder, str(i) + '.pickle')
     with open(pickle_filepath, 'wb+') as f:
         pickle.dump(merged, f)
 
@@ -138,6 +140,13 @@ def merge_data_parallel(input_folder, result_folder, processes):
     p = Pool(processes=processes)
     params = [(i, chunks[i], result_folder) for i in xrange(len(chunks))]
     p.map(merge_data, params)
+
+
+def merge_data_final(input_folder, result_folder):
+    recreate_folder(result_folder)
+    listedfiles = get_all_files_in_path(input_folder, 'pickle')
+    print(listedfiles)
+    merge_data(('result', listedfiles, result_folder))
 
 
 def parallel_variance(avg_a, count_a, var_a, avg_b, count_b, var_b):
