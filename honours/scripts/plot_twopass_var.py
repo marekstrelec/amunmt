@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# python ./plot_twopass_var.py bpe_vocab.pickle id_to_word_vocab.pickle experiments_twopass
+# python ./plot_twopass_var.py ./vocab.pickle.data experiments_twopass
 
 import sys
 import os
@@ -61,26 +61,17 @@ def get_data(means_filepath, stds_filepath):
 
 def main():
 
-    bpe_vocab = None
+    vocab = None
     with open(sys.argv[1], 'rb') as f:
-        bpe_vocab = pickle.load(f)
+        vocab = pickle.load(f)
 
-    id_to_word_vocab = None
-    with open(sys.argv[2], 'rb') as f:
-        id_to_word_vocab = pickle.load(f)
-
-    data_means, data_stds = get_data(os.path.join(sys.argv[3], 'result2', 'means.pickle'), os.path.join(sys.argv[3], 'result4', 'stds.pickle'))
+    data_means, data_stds = get_data(os.path.join(sys.argv[2], 'result2', 'means.pickle'), os.path.join(sys.argv[2], 'result4', 'stds.pickle'))
 
     means = {}
     stds = {}
     for key, val in data_means.items():
-        word = id_to_word_vocab[key]
-        freq = bpe_vocab[word]
+        freq = vocab[key]['freq']
         means[freq] = val['mean']
-
-    for key, val in data_stds.items():
-        word = id_to_word_vocab[key]
-        freq = bpe_vocab[word]
         stds[freq] = val['std']
 
     plot_distribution_ranges(means, stds)

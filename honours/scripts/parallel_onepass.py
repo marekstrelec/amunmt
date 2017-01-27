@@ -23,13 +23,13 @@ def get_all_files_in_path(path, extension):
 
 def recreate_folder(folder_path):
     if os.path.exists(folder_path):
-        yes = set(['yes','y', 'ye', ''])
-        no = set(['no','n'])
+        yes = set(['yes', 'y', ''])
+        no = set(['no', 'n'])
 
         while(True):
             choice = raw_input("A folder exists. Do you want to delete {0}? [Y/n] ".format(folder_path)).lower()
             if choice in yes:
-	        shutil.rmtree(folder_path)
+                shutil.rmtree(folder_path)
                 break
             elif choice in no:
                 break
@@ -41,7 +41,7 @@ def model_distribution(processes):
     log('modeling distribution...')
     perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
     log('merging data...')
-    merge_parallel_data(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'))
+    merge_data_parallel(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'), processes)
     log('Done.')
 
 
@@ -49,8 +49,10 @@ def online_variance(params):
     file_idx, file_path, result_folder = params
     mean_var = {}
     pickle_filepath = os.path.join(result_folder, str(file_idx) + '.pickle')
+
+    # skip already generated files
     if os.path.exists(pickle_filepath):
-	return
+        return
 
     with open(file_path, 'r') as f:
         for line in f:
@@ -87,16 +89,14 @@ def perform_one_pass_variance(input_folder, result_folder, processes):
     listedfiles = get_all_files_in_path(input_folder, 'out')
 
     p = Pool(processes=processes)
-    params = [(n, listedfiles[n], result_folder) for n in range(len(listedfiles))]
+    params = [(n, listedfiles[n], result_folder) for n in xrange(len(listedfiles))]
     p.map(online_variance, params)
 
 
-def merge_parallel_data(input_folder, result_folder):
-    recreate_folder(result_folder)
-    listedfiles = get_all_files_in_path(input_folder, 'pickle')
-
+def merge_data(param):
+    i, chunk, result_folder = param
     merged = {}
-    for idx, f in enumerate(listedfiles):
+    for idx, f in enumerate(chunk):
         with open(f, 'rb') as f:
             mean_var = pickle.load(f)
             # print(mean_var)
@@ -119,11 +119,25 @@ def merge_parallel_data(input_folder, result_folder):
                 merged[k]['mean'] = (merged[k]['mean'] * merged[k]['count'] + mean_b * count_b) / float(merged[k]['count'] + count_b)
                 merged[k]['count'] += count_b
 
-        print('merge ({0}/{1})'.format(idx+1, len(listedfiles)))
+        print('merge({0}) ({1}/{2})'.format(i, idx+1, len(chunk)))
 
     pickle_filepath = os.path.join(result_folder, 'result.pickle')
     with open(pickle_filepath, 'wb+') as f:
         pickle.dump(merged, f)
+
+
+def merge_data_parallel(input_folder, result_folder, processes):
+
+    def chunkify(lst, n):
+        return [lst[i::n] for i in xrange(n)]
+
+    recreate_folder(result_folder)
+    listedfiles = get_all_files_in_path(input_folder, 'pickle')
+    chunks = chunkify(listedfiles, processes)
+
+    p = Pool(processes=processes)
+    params = [(i, chunks[i], result_folder) for i in xrange(len(chunks))]
+    p.map(merge_data, params)
 
 
 def parallel_variance(avg_a, count_a, var_a, avg_b, count_b, var_b):

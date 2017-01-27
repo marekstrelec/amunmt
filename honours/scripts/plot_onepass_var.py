@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# python ./plot_onepass_var.py ./bpe_vocab.vocab ./id_to_word_vocab.pickle.vocab experiments/result2/result.pickle
+# python ./plot_onepass_var.py ./vocab.pickle.data experiments/result2/result.pickle
 
 import sys
 import pickle
@@ -10,7 +10,7 @@ from scipy.stats.stats import pearsonr
 from IPython import embed
 
 
-def plot_distribution_ranges(means, vars):
+def plot_distribution_ranges(means, variances):
     print('Plotting distribution ranges...')
     fig = pl.figure(1)
     ax = fig.add_subplot(111)
@@ -27,12 +27,12 @@ def plot_distribution_ranges(means, vars):
 
     fig2 = pl.figure(2)
     ax2 = fig2.add_subplot(111)
-    ax2.set_title("Standard deviation distribution")
+    ax2.set_title("Variance distribution")
     ax2.set_xlabel("Frequency")
-    ax2.set_ylabel("Standard deviation")
+    ax2.set_ylabel("Variance")
     ax2.set_xscale("log", nonposx='clip')
-    x = list(vars.keys())
-    y = list(vars.values())
+    x = list(variances.keys())
+    y = list(variances.values())
     pl.plot(x, y, 'ro')
 
     fig2.show()
@@ -47,27 +47,22 @@ def plot_distribution_ranges(means, vars):
 
 def main():
 
-    bpe_vocab = None
+    vocab = None
     with open(sys.argv[1], 'rb') as f:
-        bpe_vocab = pickle.load(f)
-
-    id_to_word_vocab = None
-    with open(sys.argv[2], 'rb') as f:
-        id_to_word_vocab = pickle.load(f)
+        vocab = pickle.load(f)
 
     data = None
-    with open(sys.argv[3], 'rb') as f:
+    with open(sys.argv[2], 'rb') as f:
         data = pickle.load(f)
 
         means = {}
-        vars = {}
+        variances = {}
         for key, val in data.items():
-            word = id_to_word_vocab[key]
-            freq = bpe_vocab[word]
+            freq = vocab[key]['freq']
             means[freq] = val['mean']
-            vars[freq] = val['m2']
+            variances[freq] = val['m2']
 
-        plot_distribution_ranges(means, vars)
+        plot_distribution_ranges(means, variances)
 
 
 if __name__ == "__main__":
