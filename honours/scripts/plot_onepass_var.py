@@ -1,8 +1,8 @@
-#!/usr/bin/env python
-# python ./plot_onepass_var.py ./vocab.pickle.data experiments/result2/result.pickle
+#!/usr/bin/env python2
+# python2 ./plot_onepass_var.py ./vocab.pickle.data experiments/result3/result.pickle
 
 import sys
-import pickle
+import cPickle as pickle
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')

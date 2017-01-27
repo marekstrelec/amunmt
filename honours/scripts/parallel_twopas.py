@@ -3,7 +3,7 @@
 import glob
 import math
 import os
-import pickle
+import cPickle as pickle
 import shutil
 import sys
 from collections import defaultdict

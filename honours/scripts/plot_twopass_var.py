@@ -3,7 +3,7 @@
 
 import sys
 import os
-import pickle
+import cPickle as pickle
 import numpy as np
 from matplotlib import pyplot as pl
 from scipy.stats.stats import pearsonr

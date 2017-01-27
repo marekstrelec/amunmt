@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-# python ./parallel_onepass.py experiments_onepass
+#!/usr/bin/env python2
+# python2 ./parallel_onepass.py experiments_onepass
 
 import glob
 import numpy as np
 import os
-import pickle
+import cPickle as pickle
 import shutil
 import sys
 from multiprocessing import Pool
@@ -100,36 +100,29 @@ def merge_data(param):
     merged = {}
     for idx, f in enumerate(chunk):
         try:
-            p = open(f, 'rb')
-            mean_var = pickle.load(p)
-            p.close()
+            with open(f, 'rb') as f:
+                print('merging({0}) ({1}/{2}) - {3}'.format(i, idx + 1, len(chunk), f))
+                mean_var = pickle.load(f)
+
+                for k in sorted(mean_var.keys()):
+                    if k not in merged:
+                        merged[k] = {
+                            'size': mean_var[k]['size'],
+                            'mean': mean_var[k]['mean'],
+                            'm2': mean_var[k]['m2']
+                        }
+                        continue
+
+                    size_b = mean_var[k]['size']
+                    mean_b = mean_var[k]['mean']
+                    var_b = mean_var[k]['m2']
+
+                    merged[k]['m2'] = parallel_variance(merged[k]['mean'], merged[k]['size'], merged[k]['m2'], mean_b, size_b, var_b)
+                    merged[k]['mean'] = (merged[k]['mean'] * merged[k]['size'] + mean_b * size_b) / float(merged[k]['size'] + size_b)
+                    merged[k]['size'] += size_b
         except EOFError:
-            print('>>>>>ERROR')
-            print('>> {0} - {1}'.format(idx, f))
+            print('>>>>>>> EOFError - file: {0}'.format(f))
             continue
-        
-        print('merging({0}) ({1}/{2}) - {3}'.format(i, idx+1, len(chunk), f))
-        with open(f, 'rb') as f:
-            mean_var = pickle.load(f)
-            # print(mean_var)
-
-            for k in sorted(mean_var.keys()):
-                # print(k)
-                if k not in merged:
-                    merged[k] = {
-                        'size': mean_var[k]['size'],
-                        'mean': mean_var[k]['mean'],
-                        'm2': mean_var[k]['m2']
-                    }
-                    continue
-
-                size_b = mean_var[k]['size']
-                mean_b = mean_var[k]['mean']
-                var_b = mean_var[k]['m2']
-
-                merged[k]['m2'] = parallel_variance(merged[k]['mean'], merged[k]['size'], merged[k]['m2'], mean_b, size_b, var_b)
-                merged[k]['mean'] = (merged[k]['mean'] * merged[k]['size'] + mean_b * size_b) / float(merged[k]['size'] + size_b)
-                merged[k]['size'] += size_b
 
     pickle_filepath = os.path.join(result_folder, str(i) + '.pickle')
     with open(pickle_filepath, 'wb+') as f:
@@ -144,8 +137,6 @@ def merge_data_parallel(input_folder, result_folder, processes):
     recreate_folder(result_folder)
     listedfiles = get_all_files_in_path(input_folder, 'pickle')
     chunks = chunkify(listedfiles, processes)
-    #chunks = [['experiment/result1/'+str(8868+n)+'.pickle' for n in range(3)]]
-    # print(chunks)
 
     p = Pool(processes=processes)
     params = [(i, chunks[i], result_folder) for i in xrange(len(chunks))]
@@ -169,7 +160,7 @@ def test():
 
     log('Testing...\n')
     print('My values')
-    merged = merge_parallel_data(os.path.join(sys.argv[1], 'result1'))
+    merged = merge_data_parallel(os.path.join(sys.argv[1], 'result1'))
     for k, v in sorted(merged.items()):
         print('{0}: mean {1}; var {2}'.format(k, v['mean'], v['m2']))
 
