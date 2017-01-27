@@ -23,11 +23,11 @@ def get_all_files_in_path(path, extension):
 
 def recreate_folder(folder_path):
     if os.path.exists(folder_path):
-        yes = set(['yes', 'y', ''])
-        no = set(['no', 'n'])
+        yes = set(['yes', 'y'])
+        no = set(['no', 'n', ''])
 
         while(True):
-            choice = raw_input("A folder exists. Do you want to delete {0}? [Y/n] ".format(folder_path)).lower()
+            choice = raw_input("A folder exists. Do you want to delete {0}? [y/N] ".format(folder_path)).lower()
             if choice in yes:
                 shutil.rmtree(folder_path)
                 break
@@ -99,6 +99,16 @@ def merge_data(param):
     i, chunk, result_folder = param
     merged = {}
     for idx, f in enumerate(chunk):
+        try:
+            p = open(f, 'rb')
+            mean_var = pickle.load(p)
+            p.close()
+        except EOFError:
+            print('>>>>>ERROR')
+            print('>> {0} - {1}'.format(idx, f))
+            continue
+        
+        print('merging({0}) ({1}/{2}) - {3}'.format(i, idx+1, len(chunk), f))
         with open(f, 'rb') as f:
             mean_var = pickle.load(f)
             # print(mean_var)
@@ -121,8 +131,6 @@ def merge_data(param):
                 merged[k]['mean'] = (merged[k]['mean'] * merged[k]['size'] + mean_b * size_b) / float(merged[k]['size'] + size_b)
                 merged[k]['size'] += size_b
 
-        print('merge({0}) ({1}/{2})'.format(i, idx+1, len(chunk)))
-
     pickle_filepath = os.path.join(result_folder, str(i) + '.pickle')
     with open(pickle_filepath, 'wb+') as f:
         pickle.dump(merged, f)
@@ -136,6 +144,8 @@ def merge_data_parallel(input_folder, result_folder, processes):
     recreate_folder(result_folder)
     listedfiles = get_all_files_in_path(input_folder, 'pickle')
     chunks = chunkify(listedfiles, processes)
+    #chunks = [['experiment/result1/'+str(8868+n)+'.pickle' for n in range(3)]]
+    # print(chunks)
 
     p = Pool(processes=processes)
     params = [(i, chunks[i], result_folder) for i in xrange(len(chunks))]
