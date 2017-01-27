@@ -215,7 +215,7 @@ class Decoder {
 //            WriteLogMatrixSize(Probs_, "Probs_");
 
             // dump all scores
-            WriteLogAllScores(Probs_);
+            WriteLogBestScores(Probs_, 12);
 
           mblas::Softmax(Probs_);
           Probs = blaze::forEach(Probs_, Log());
@@ -293,7 +293,7 @@ class Decoder {
                 }
                 for (int b = 0; b < bsize; ++b) {
                     int ki = q.top().second;
-                    ss << ki << "\t" << mat(i, ki) << "\t" << God::GetTargetVocab()[ki] << "\n";
+                    ss << ki << "\t" << roundf(mat(i, ki)*1000)/1000 << "\n";
                     q.pop();
                 }
             }

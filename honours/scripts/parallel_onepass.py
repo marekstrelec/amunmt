@@ -39,9 +39,9 @@ def recreate_folder(folder_path):
 
 def model_distribution(processes):
     log('modeling distribution...')
-    #perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
+    perform_one_pass_variance(os.path.join(sys.argv[1], 'input'), os.path.join(sys.argv[1], 'result1'), processes)
     log('merging data parallel...')
-    #merge_data_parallel(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'), processes)
+    merge_data_parallel(os.path.join(sys.argv[1], 'result1'), os.path.join(sys.argv[1], 'result2'), processes)
     log('merging data final...')
     merge_data_final(os.path.join(sys.argv[1], 'result2'), os.path.join(sys.argv[1], 'result3'))
     log('Done.')
@@ -185,4 +185,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise Exception("Path to input data not specified!")
 
-    model_distribution(processes=17)
+    model_distribution(processes=12)

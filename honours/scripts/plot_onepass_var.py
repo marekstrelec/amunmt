@@ -12,6 +12,9 @@ from scipy.stats.stats import pearsonr
 
 from IPython import embed
 
+SHOW_FIG = False
+MODE = 'var'
+
 
 def plot_distribution_ranges(means, variances):
     print('Plotting distribution ranges...')
@@ -24,7 +27,11 @@ def plot_distribution_ranges(means, variances):
     x = list(means.keys())
     y = list(means.values())
     pl.plot(x, y, 'bo')
-    # fig.show()
+
+    pl.savefig('means.png')
+
+    if SHOW_FIG:
+        fig.show()
 
     pcoeff_mean, pval_mean = pearsonr(np.array(x), np.array(y))
 
@@ -35,10 +42,17 @@ def plot_distribution_ranges(means, variances):
     ax2.set_ylabel("Variance")
     ax2.set_xscale("log", nonposx='clip')
     x = list(variances.keys())
-    y = list(variances.values())
+    if MODE == 'var':
+        y = list([n for n in variances.values()])
+    elif MODE == 'std':
+        y = list([n ** (0.5) for n in variances.values()])
+    else:
+        raise Exception('Mode wasn\'t recognised!')
     pl.plot(x, y, 'ro')
 
-    # fig2.show()
+    pl.savefig('vars.png')
+    if SHOW_FIG:
+        fig2.show()
 
     pcoeff_std, pval_std = pearsonr(np.array(x), np.array(y))
 
