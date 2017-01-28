@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# python2 ./parallel_onepass.py experiments_onepass
+# python2 ./parallel_onepass.py ./vocab.pickle.data experiments_onepass
 
 import glob
 import numpy as np
@@ -150,7 +150,6 @@ def merge_data_parallel(input_folder, result_folder, processes):
 def merge_data_final(input_folder, result_folder):
     recreate_folder(result_folder)
     listedfiles = get_all_files_in_path(input_folder, 'pickle')
-    print(listedfiles)
     merge_data(('result', listedfiles, result_folder))
 
 
