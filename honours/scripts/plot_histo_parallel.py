@@ -8,8 +8,9 @@ import glob
 import numpy as np
 from matplotlib import pyplot as pl
 from collections import defaultdict
+from scipy.stats import norm
 
-# from IPython import embed
+from IPython import embed
 
 
 def get_all_files_in_path(path, extension):
@@ -38,21 +39,37 @@ def main():
     # pl.xlim([-20, 10])
 
     # loop over all result files - each file is one histogram
-    listedfiles = get_all_files_in_path(sys.argv[1], 'pickle')
-    for idx, file_path in enumerate(listedfiles):
+    # listedfiles = get_all_files_in_path(sys.argv[1], 'pickle')
+    base_dir = './experiments/histo_result_403_1140'
+    targets = ['r.pickle', 'n.pickle', 'f.pickle']
+    # targets = ['rn.pickle', 'f.pickle']
+    # targets = ['f.pickle', 'rnf.pickle']
+
+    # targets = reversed(targets)
+
+    for idx, file_name in enumerate(targets):
         cl = colours[idx % len(colours)]
-        print("{0} - {1}".format(file_path, cl))
+        print("{0} - {1}".format(file_name, cl))
+        file_path = os.path.join(base_dir, file_name)
         with open(file_path, 'rb') as f:
             histodata = pickle.load(f)
             histodata = rebin(histodata, step=0.2)
 
-            x = [round(x) for x, _ in sorted(histodata.items())]
+            x = [round(x, 2) for x, _ in sorted(histodata.items())]
             y = [y for _, y in sorted(histodata.items())]  # / float(10 ** 6)
             # pl.plot(x, y, color=cl, linewidth=2.0, ls='--')
-            pl.bar(x, y, color=cl)
-            averaged = np.average(x, weights=y)
-            print(averaged)
-            print("{0}: {1} with mean: {2} and std: {3}".format(cl, str(len(x)), np.mean(x), np.std(x)))
+            # pl.bar(x, y, color=cl)
+            # averaged = np.average(x, weights=y)
+            #
+            # print("{0}: {1} with mean: {2} and std: {3}".format(cl, str(len(x)), np.mean(x), np.std(x)))
+            # print(averaged)
+            # print("sum: {0}".format(sum(y)))
+            # print('')
+
+            # vals, bins = np.histogram(x, bins=1000, weights=y)
+            # embed()
+            pl.hist(x, weights=y, bins=np.arange(-20, 20, 0.4))
+
 
     fig.show()
     raw_input()
