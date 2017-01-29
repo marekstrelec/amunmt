@@ -120,7 +120,7 @@ def perform_parallel_histo(input_folder, result_folder, vocab, step, processes):
     if not recreated:
         return
 
-    listedfiles = get_all_files_in_path(input_folder, 'out')[:100]
+    listedfiles = get_all_files_in_path(input_folder, 'out')
     chunks = chunkify(listedfiles, processes)
 
     p = Pool(processes=processes)
@@ -155,6 +155,6 @@ if __name__ == "__main__":
     vocab = None
     with open(sys.argv[1], 'rb') as f:
         vocab = pickle.load(f)
-        splitted_vocab = split_vocab(vocab, 403, 1140)
+        splitted_vocab = split_vocab(vocab, 200, 400)
 
         model_histogram(splitted_vocab, step=0.1, processes=4)

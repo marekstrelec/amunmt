@@ -40,7 +40,6 @@ def main():
 
     # loop over all result files - each file is one histogram
     # listedfiles = get_all_files_in_path(sys.argv[1], 'pickle')
-    base_dir = './experiments/histo_result_403_1140'
     targets = ['r.pickle', 'n.pickle', 'f.pickle']
     # targets = ['rn.pickle', 'f.pickle']
     # targets = ['f.pickle', 'rnf.pickle']
@@ -50,13 +49,13 @@ def main():
     for idx, file_name in enumerate(targets):
         cl = colours[idx % len(colours)]
         print("{0} - {1}".format(file_name, cl))
-        file_path = os.path.join(base_dir, file_name)
+        file_path = os.path.join(sys.argv[1], file_name)
         with open(file_path, 'rb') as f:
             histodata = pickle.load(f)
             histodata = rebin(histodata, step=0.2)
 
             x = [round(x, 2) for x, _ in sorted(histodata.items())]
-            y = [y for _, y in sorted(histodata.items())]  # / float(10 ** 6)
+            y = [y/float(10**6) for _, y in sorted(histodata.items())]  # / float(10 ** 6)
             # pl.plot(x, y, color=cl, linewidth=2.0, ls='--')
             # pl.bar(x, y, color=cl)
             # averaged = np.average(x, weights=y)
@@ -68,7 +67,8 @@ def main():
 
             # vals, bins = np.histogram(x, bins=1000, weights=y)
             # embed()
-            pl.hist(x, weights=y, bins=np.arange(-20, 20, 0.4))
+            pl.grid(True)
+            pl.hist(x, weights=y, bins=np.arange(-15, 10, 0.4), alpha=0.5)
 
 
     fig.show()
