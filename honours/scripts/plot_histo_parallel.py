@@ -29,7 +29,9 @@ def rebin(data, step):
 
 def main():
 
-    colours = ['r', 'g', 'b', 'y']
+    colours = ['b', 'g', 'r', 'y']
+    targets = ['r.pickle', 'n.pickle', 'f.pickle']
+    targets = [None, None, 'f.pickle']
 
     fig = pl.figure(1)
     ax = fig.add_subplot(111)
@@ -38,15 +40,10 @@ def main():
     ax.get_yaxis().get_major_formatter().set_scientific(False)
     # pl.xlim([-20, 10])
 
-    # loop over all result files - each file is one histogram
-    # listedfiles = get_all_files_in_path(sys.argv[1], 'pickle')
-    targets = ['r.pickle', 'n.pickle', 'f.pickle']
-    # targets = ['rn.pickle', 'f.pickle']
-    # targets = ['f.pickle', 'rnf.pickle']
-
-    # targets = reversed(targets)
-
     for idx, file_name in enumerate(targets):
+        if file_name is None:
+            continue
+
         cl = colours[idx % len(colours)]
         print("{0} - {1}".format(file_name, cl))
         file_path = os.path.join(sys.argv[1], file_name)
@@ -68,7 +65,8 @@ def main():
             # vals, bins = np.histogram(x, bins=1000, weights=y)
             # embed()
             pl.grid(True)
-            pl.hist(x, weights=y, bins=np.arange(-15, 10, 0.4), alpha=0.5)
+            # pl.hist(x, weights=y, bins=np.arange(-15, 10, 0.4), alpha=0.6, color=cl)
+            pl.bar(x, y, color=cl)
 
 
     fig.show()
