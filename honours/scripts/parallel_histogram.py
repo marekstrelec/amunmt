@@ -12,7 +12,7 @@ from multiprocessing import Pool
 from time import gmtime, strftime
 
 
-options = ['r', 'n', 'rn', 'f', 'rnf']
+options = ['r', 'n', 'f', 'z']
 
 
 def split_vocab(vocab, a, b):
@@ -21,17 +21,14 @@ def split_vocab(vocab, a, b):
         splitted[o] = set()
 
     for k, v in vocab.items():
-        if v['freq'] < a:
+        if v['freq'] < 1:
+            splitted['z'].add(k)
+        elif v['freq'] < a:
             splitted['r'].add(k)
-            splitted['rn'].add(k)
-            splitted['rnf'].add(k)
         elif v['freq'] < b:
             splitted['n'].add(k)
-            splitted['rn'].add(k)
-            splitted['rnf'].add(k)
         else:
             splitted['f'].add(k)
-            splitted['rnf'].add(k)
 
     return splitted
 
@@ -155,6 +152,13 @@ if __name__ == "__main__":
     vocab = None
     with open(sys.argv[1], 'rb') as f:
         vocab = pickle.load(f)
-        splitted_vocab = split_vocab(vocab, 200, 400)
+        # from IPython import embed
+        # embed()
+
+        splitted_vocab = split_vocab(vocab, 235, 1300)
+        print(len(splitted_vocab['z']))
+        print(len(splitted_vocab['r']))
+        print(len(splitted_vocab['n']))
+        print(len(splitted_vocab['f']))
 
         model_histogram(splitted_vocab, step=0.1, processes=4)
