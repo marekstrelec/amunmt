@@ -20,7 +20,7 @@ def plot_distribution_ranges(means, variances):
     print('Plotting distribution ranges...')
     fig = pl.figure(1)
     ax = fig.add_subplot(111)
-    ax.set_title("Mean distribution")
+    # ax.set_title("Mean distribution")
     ax.set_xlabel("Frequency")
     ax.set_ylabel("Mean")
     ax.set_xscale("log", nonposx='clip')
@@ -37,15 +37,15 @@ def plot_distribution_ranges(means, variances):
 
     fig2 = pl.figure(2)
     ax2 = fig2.add_subplot(111)
-    ax2.set_title("Variance distribution")
+    # ax2.set_title("Variance distribution")
     ax2.set_xlabel("Frequency")
     ax2.set_ylabel("Variance")
     ax2.set_xscale("log", nonposx='clip')
-    x = list(variances.keys())
+    x = list([k for k, v in variances.items() if v < 1000])
     if MODE == 'var':
-        y = list([n for n in variances.values()])
+        y = list([v for v in variances.values() if v < 1000])
     elif MODE == 'std':
-        y = list([n ** (0.5) for n in variances.values()])
+        y = list([v ** (0.5) for v in variances.values()])
     else:
         raise Exception('Mode wasn\'t recognised!')
     pl.plot(x, y, 'ro')
