@@ -91,3 +91,5 @@ tmp/
 cmake-build-debug/
 
 honours/scripts/results/
+config-csen.yml
+
