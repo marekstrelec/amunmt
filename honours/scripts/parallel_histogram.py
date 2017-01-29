@@ -12,6 +12,30 @@ from multiprocessing import Pool
 from time import gmtime, strftime
 
 
+options = ['r', 'n', 'rn', 'f', 'rnf']
+
+
+def split_vocab(vocab, a, b):
+    splitted = dict()
+    for o in options:
+        splitted[o] = set()
+
+    for k, v in vocab.items():
+        if v['freq'] < a:
+            splitted['r'].add(k)
+            splitted['rn'].add(k)
+            splitted['rnf'].add(k)
+        elif v['freq'] < b:
+            splitted['n'].add(k)
+            splitted['rn'].add(k)
+            splitted['rnf'].add(k)
+        else:
+            splitted['f'].add(k)
+            splitted['rnf'].add(k)
+
+    return splitted
+
+
 def log(text):
     time = strftime("%H:%M:%S", gmtime())
     print("[{0}] {1}".format(time, text))
@@ -36,9 +60,8 @@ def recreate_folder(folder_path):
                 return False
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
-        os.makedirs(os.path.join(folder_path, 'r'))
-        os.makedirs(os.path.join(folder_path, 'n'))
-        os.makedirs(os.path.join(folder_path, 'f'))
+        for o in options:
+            os.makedirs(os.path.join(folder_path, o))
         return True
 
 
@@ -46,17 +69,16 @@ def model_histogram(vocab, processes, step):
     log('gathering histodata...')
     perform_parallel_histo(os.path.join(sys.argv[2], 'input'), os.path.join(sys.argv[2], 'histo_result1'), vocab, step, processes)
     log('merging parallel data...')
-    merge_parallel_histodata(os.path.join(sys.argv[2], 'histo_result1', 'r'), os.path.join(sys.argv[2], 'histo_result2'), '0_r.pickle')
-    merge_parallel_histodata(os.path.join(sys.argv[2], 'histo_result1', 'n'), os.path.join(sys.argv[2], 'histo_result2'), '1_n.pickle')
-    merge_parallel_histodata(os.path.join(sys.argv[2], 'histo_result1', 'f'), os.path.join(sys.argv[2], 'histo_result2'), '2_f.pickle')
+    for o in options:
+        merge_parallel_histodata(os.path.join(sys.argv[2], 'histo_result1', o), os.path.join(sys.argv[2], 'histo_result2'), str(o) + '.pickle')
     log('Done.')
 
 
 def compute_histodata(params):
     process_idx, chunk, result_folder, vocab, step = params
-    histodata_r = defaultdict(int)
-    histodata_n = defaultdict(int)
-    histodata_f = defaultdict(int)
+    histodata = {}
+    for o in options:
+        histodata[o] = defaultdict(int)
 
     for idx, file_path in enumerate(chunk):
         try:
@@ -73,12 +95,9 @@ def compute_histodata(params):
                     wid, score = line.split('\t', 1)
                     bin = float(score) - (float(score) % step)
 
-                    if wid in vocab['r']:
-                        histodata_r[bin] += 1
-                    if wid in vocab['n']:
-                        histodata_n[bin] += 1
-                    if wid in vocab['f']:
-                        histodata_f[bin] += 1
+                    for o in options:
+                        if wid in vocab[o]:
+                            histodata[o][bin] += 1
 
         except EOFError:
             print('>>>>>>> EOFError - file: {0}'.format(file_path))
@@ -87,17 +106,10 @@ def compute_histodata(params):
             print('>>>>>>> ValueError - file: {0}'.format(file_path))
             continue
 
-    pickle_filepath = os.path.join(result_folder, 'r', str(process_idx) + '.pickle')
-    with open(pickle_filepath, 'wb+') as f:
-        pickle.dump(histodata_r, f)
-
-    pickle_filepath = os.path.join(result_folder, 'n', str(process_idx) + '.pickle')
-    with open(pickle_filepath, 'wb+') as f:
-        pickle.dump(histodata_n, f)
-
-    pickle_filepath = os.path.join(result_folder, 'f', str(process_idx) + '.pickle')
-    with open(pickle_filepath, 'wb+') as f:
-        pickle.dump(histodata_f, f)
+    for o in options:
+        pickle_filepath = os.path.join(result_folder, o, str(process_idx) + '.pickle')
+        with open(pickle_filepath, 'wb+') as f:
+            pickle.dump(histodata[o], f)
 
 
 def perform_parallel_histo(input_folder, result_folder, vocab, step, processes):
@@ -108,7 +120,7 @@ def perform_parallel_histo(input_folder, result_folder, vocab, step, processes):
     if not recreated:
         return
 
-    listedfiles = get_all_files_in_path(input_folder, 'out')[:200]
+    listedfiles = get_all_files_in_path(input_folder, 'out')[:100]
     chunks = chunkify(listedfiles, processes)
 
     p = Pool(processes=processes)
@@ -137,29 +149,12 @@ def merge_parallel_histodata(input_folder, result_folder, result_filename):
 
 
 if __name__ == "__main__":
-    def split_vocab(vocab, a, b):
-        splitted = {
-            'r': set(),
-            'n': set(),
-            'f': set()
-        }
-
-        for k, v in vocab.items():
-            if v['freq'] < a:
-                splitted['r'].add(k)
-            elif v['freq'] < b:
-                splitted['n'].add(k)
-            else:
-                splitted['f'].add(k)
-
-        return splitted
-
     if len(sys.argv) < 3:
         raise Exception("Path to input data not specified!")
 
     vocab = None
     with open(sys.argv[1], 'rb') as f:
         vocab = pickle.load(f)
-        splitted_vocab = split_vocab(vocab, 1000, 50000)
+        splitted_vocab = split_vocab(vocab, 403, 1140)
 
         model_histogram(splitted_vocab, step=0.1, processes=4)

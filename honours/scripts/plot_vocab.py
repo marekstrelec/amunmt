@@ -1,14 +1,13 @@
 #!/usr/bin/env python2
-# python2 plot_vocab.py ./nonbpe_vocab.pickle.data ./vocab.pickle.data
+# python2 plot_vocab.py ./normal_vocab.pickle.data ./vocab.pickle.data
 
 import sys
-import os
 import pickle
 import numpy as np
 from matplotlib import pyplot as pl
 
 
-def plot(nonbpe_freqs, bpe_freqs):
+def plot_zipf(nonbpe_freqs, bpe_freqs):
     fig = pl.figure(1)
     ax = fig.add_subplot(111)
 
@@ -40,6 +39,24 @@ def plot(nonbpe_freqs, bpe_freqs):
     raw_input()
 
 
+def plot_cumsum(bpe_freqs):
+    values = sorted([x[0] / float(10 ** 6) for x in bpe_freqs])
+    cumulative = np.cumsum(values)
+
+    fig = pl.figure(1)
+    ax = fig.add_subplot(111)
+    ax.set_xlabel("Number of words")
+    ax.set_ylabel("Accumulated frequency (millions)")
+    ax.get_yaxis().get_major_formatter().set_scientific(False)
+    ax.grid(True)
+
+    pl.plot(range(len(cumulative)), cumulative, c='blue')
+
+    pl.savefig('cumsum.png')
+    fig.show()
+    raw_input()
+
+
 def main():
     nonbpe_freqs = None
     bpe_freqs = None
@@ -60,19 +77,6 @@ def main():
 
         return nonbpe_freqs, bpe_freqs
 
-    # caching
-    # cache_path = 'plot_vocab.cache.pickle'
-    # if os.path.exists(cache_path):
-    #     print('Loading cached file...')
-    #     with open(cache_path, 'rb') as f:
-    #         nonbpe_freqs, bpe_freqs = pickle.load(f)
-    # else:
-    #     print('Cached file not found.')
-    #     with open(cache_path, 'wb+') as f:
-    #         nonbpe_freqs, bpe_freqs = load_data()
-    #         print('Saving cache...')
-    #         pickle.dump((nonbpe_freqs, bpe_freqs), f)
-
     nonbpe_freqs, bpe_freqs = load_data()
 
     # check that we have data
@@ -80,9 +84,9 @@ def main():
         raise Exception('Something went wrong')
 
     print('Done.\nplotting...')
-    print(nonbpe_freqs[:10])
-    print(bpe_freqs[:10])
-    plot(nonbpe_freqs, bpe_freqs)
+
+    plot_cumsum(bpe_freqs)
+    plot_zipf(nonbpe_freqs, bpe_freqs)
 
 
 if __name__ == "__main__":
