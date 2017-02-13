@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import sys
 import os
@@ -36,7 +36,7 @@ def load_full_vocab(filepath):
 def show_unused(freq, full_vocab, used_vocab):
     full_words = set(full_vocab.keys())
     used_words = set(used_vocab.keys())
-    unused_words = full_words-used_words
+    unused_words = full_words - used_words
 
     print("Full-vocab size:\t{0}".format(len(full_words)))
     print("Used-vocab size:\t{0}".format(len(used_words)))
@@ -52,7 +52,8 @@ def main():
     used_vocab = dict()
     pickle_file = os.path.basename(sys.argv[2]) + ".pickle"
     if len(sys.argv) < 3:
-        raise Exception("Arguments missing: expecting (vocab file, histogram file)")
+        raise Exception(
+            "Arguments missing: expecting (vocab file, histogram file)")
 
     if os.path.isfile(pickle_file):
         # load freq from pickle
@@ -60,7 +61,7 @@ def main():
         with open(pickle_file, 'rb') as f:
             freq, used_vocab = cpickle.load(f)
     else:
-        #embed()
+        # embed()
         print('No pickle file found. Bye.')
 
     full_vocab = load_full_vocab(sys.argv[1])

@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # python2 parallel_histogram.py ./vocab.pickle.data experiments
+# output folders: histo_result1, histo_result2
 
 import glob
 import numpy as np
@@ -49,7 +50,8 @@ def recreate_folder(folder_path):
         no = set(['no', 'n', ''])
 
         while(True):
-            choice = raw_input("A folder exists. Do you want to delete {0}? [y/N] ".format(folder_path)).lower()
+            choice = raw_input(
+                "A folder exists. Do you want to delete {0}? [y/N] ".format(folder_path)).lower()
             if choice in yes:
                 shutil.rmtree(folder_path)
                 break
@@ -64,10 +66,12 @@ def recreate_folder(folder_path):
 
 def model_histogram(vocab, processes, step):
     log('gathering histodata...')
-    perform_parallel_histo(os.path.join(sys.argv[2], 'input'), os.path.join(sys.argv[2], 'histo_result1'), vocab, step, processes)
+    perform_parallel_histo(os.path.join(sys.argv[2], 'input'), os.path.join(
+        sys.argv[2], 'histo_result1'), vocab, step, processes)
     log('merging parallel data...')
     for o in options:
-        merge_parallel_histodata(os.path.join(sys.argv[2], 'histo_result1', o), os.path.join(sys.argv[2], 'histo_result2'), str(o) + '.pickle')
+        merge_parallel_histodata(os.path.join(sys.argv[2], 'histo_result1', o), os.path.join(
+            sys.argv[2], 'histo_result2'), str(o) + '.pickle')
     log('Done.')
 
 
@@ -81,7 +85,8 @@ def compute_histodata(params):
         try:
             with open(file_path, 'r') as f:
                 if idx % 1 == 0:
-                    print('processing({0}) ({1}/{2}) - {3}'.format(process_idx, idx + 1, len(chunk), file_path))
+                    print(
+                        'processing({0}) ({1}/{2}) - {3}'.format(process_idx, idx + 1, len(chunk), file_path))
 
                 for line in f:
                     line = line.strip()
@@ -104,7 +109,8 @@ def compute_histodata(params):
             continue
 
     for o in options:
-        pickle_filepath = os.path.join(result_folder, o, str(process_idx) + '.pickle')
+        pickle_filepath = os.path.join(
+            result_folder, o, str(process_idx) + '.pickle')
         with open(pickle_filepath, 'wb+') as f:
             pickle.dump(histodata[o], f)
 
@@ -121,7 +127,8 @@ def perform_parallel_histo(input_folder, result_folder, vocab, step, processes):
     chunks = chunkify(listedfiles, processes)
 
     p = Pool(processes=processes)
-    params = [(i, chunks[i], result_folder, vocab, step) for i in xrange(len(chunks))]
+    params = [(i, chunks[i], result_folder, vocab, step)
+              for i in xrange(len(chunks))]
     p.map(compute_histodata, params)
     # compute_histodata(params[0])
 

@@ -1,13 +1,21 @@
 #!/usr/bin/env python2
-# python2 plot_vocab.py ./normal_vocab.pickle.data ./vocab.pickle.data
+# python2 plot_vocab.py ./vocab.pickle.data ./nonbpe_vocab.pickle.data
 
 import sys
 import pickle
 import numpy as np
 from matplotlib import pyplot as pl
 
+BREAK_A = 35000
+BREAK_B = 70000
 
-def plot_zipf(nonbpe_freqs, bpe_freqs):
+
+def get_rgb(a, b, c):
+    return [a / 255.0, b / 255.0, c / 255.0]
+
+
+def plot_zipf(sorted_vocab, sorted_nonbpe_vocab):
+    area = 5
     fig = pl.figure(1)
     ax = fig.add_subplot(111)
 
@@ -16,22 +24,22 @@ def plot_zipf(nonbpe_freqs, bpe_freqs):
 
     ax.set_yscale("log", nonposy='clip')
     ax.set_xscale("log", nonposx='clip')
-    pl.xlim(1.0, 10 ** 6)
+    pl.xlim(1.0, 10 ** 7)
     pl.ylim(1.0, 10 ** 8)
     # ax.get_yaxis().get_major_formatter().set_scientific(False)
 
-    y = [n[0] for n in nonbpe_freqs]
-    x = range(1, len(nonbpe_freqs) + 1)
-    colors = [0 / 255.0, 204 / 255.0, 102 / 255.0]
+    # NON-BPE (NORMAL) WORDS
+    y = sorted([n[1]['freq'] for n in sorted_nonbpe_vocab], reverse=True)
+    x = range(1, len(sorted_nonbpe_vocab) + 1)
+    colors = get_rgb(102, 194, 165)
 
-    area = 5
     pl.scatter(x, y, s=area, c=colors, alpha=0.9, lw=0, label='normal words')
 
-    y = [n[0] for n in bpe_freqs]
-    x = range(1, len(bpe_freqs) + 1)
-    colors = [51 / 255.0, 153 / 255.0, 255 / 255.0]
+    # BPE WORDS
+    y = sorted([n[1]['freq'] for n in sorted_vocab], reverse=True)
+    x = range(1, len(sorted_vocab) + 1)
+    colors = get_rgb(141, 160, 203)
     pl.scatter(x, y, s=area, c=colors, alpha=0.9, lw=0, label='sub-words')
-    # pl.plot(x, y, color='g', marker='.', linestyle='None', label='sub-words')
     pl.legend(loc="upper right", numpoints=1)
 
     pl.savefig('zipf.png')
@@ -39,8 +47,8 @@ def plot_zipf(nonbpe_freqs, bpe_freqs):
     raw_input()
 
 
-def plot_cumsum(bpe_freqs):
-    values = sorted([x[0] / float(10 ** 6) for x in bpe_freqs])
+def plot_cumsum(sorted_vocab):
+    values = sorted([x[1]['freq'] / float(10 ** 6) for x in sorted_vocab])
     cumulative = np.cumsum(values)
 
     fig = pl.figure(1)
@@ -50,43 +58,50 @@ def plot_cumsum(bpe_freqs):
     ax.get_yaxis().get_major_formatter().set_scientific(False)
     ax.grid(True)
 
-    pl.plot(range(len(cumulative)), cumulative, c='blue')
+    pl.plot(range(len(cumulative)), cumulative,
+            c=get_rgb(141, 160, 203), lw=1.5)
+    pl.axvline(x=BREAK_A, color=get_rgb(252, 141, 98), ls='--', lw=1.0)
+    pl.axvline(x=BREAK_B, color=get_rgb(252, 141, 98), ls='--', lw=1.0)
 
     pl.savefig('cumsum.png')
     fig.show()
     raw_input()
 
 
+def find_breakpoints(sorted_vocab):
+    values = sorted([x[1]['freq'] for x in sorted_vocab])
+    print('len of values: {0}'.format(len(values)))
+    print("BREAK_A - rank: {0},  freq: {1}".format(BREAK_A, values[BREAK_A]))
+    print("BREAK_B - rank: {0},  freq: {1}".format(BREAK_B, values[BREAK_B]))
+
+
 def main():
-    nonbpe_freqs = None
-    bpe_freqs = None
+    print("Loading BPE data...")
+    vocab = None
+    with open(sys.argv[1], 'rb') as f:
+        vocab = pickle.load(f)
+    print('Done.')
+    print("Plotting cumsum...")
+    sorted_vocab = sorted(vocab.items(), key=lambda x: x[
+                          1]['freq'], reverse=False)
+    find_breakpoints(sorted_vocab)
+    plot_cumsum(sorted_vocab)
 
-    def load_data():
-        nonbpe_freqs = None
-        bpe_freqs = None
-        with open(sys.argv[1], 'rb') as f:
-            print('loading nonbpe data...')
-            nonbpe_vocab = pickle.load(f)
-            nonbpe_freqs = list(sorted([(v, k) for k, v in nonbpe_vocab.items()], reverse=True))
+    res = raw_input('Continue? [n=exit] ')
+    if res.lower() == 'n':
+        sys.exit(0)
 
-        with open(sys.argv[2], 'rb') as f:
-            print('loading bpe data...')
-            bpe_vocab = pickle.load(f)
-            bpe_freqs = list(sorted([(v, k) for k, v in bpe_vocab.items()], reverse=True))
-            # bpe_freqs = list(sorted([(v['freq'], k) for k, v in bpe_vocab.items() if v['freq'] > 0], reverse=True))
+    print("Loading Non-BPE data... (this may take a while)")
+    nonbpe_vocab = None
+    with open(sys.argv[2], 'rb') as f:
+        nonbpe_vocab = pickle.load(f)
+    print('Done.')
 
-        return nonbpe_freqs, bpe_freqs
-
-    nonbpe_freqs, bpe_freqs = load_data()
-
-    # check that we have data
-    if nonbpe_freqs is None or bpe_freqs is None:
-        raise Exception('Something went wrong')
-
-    print('Done.\nplotting...')
-
-    plot_cumsum(bpe_freqs)
-    plot_zipf(nonbpe_freqs, bpe_freqs)
+    print("Plotting zipf...")
+    sorted_nonbpe_vocab = sorted(nonbpe_vocab.items(), key=lambda x: x[
+                                 1]['freq'], reverse=False)
+    plot_zipf(sorted_vocab, sorted_nonbpe_vocab)
+    print('Done.')
 
 
 if __name__ == "__main__":
