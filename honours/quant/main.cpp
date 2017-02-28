@@ -475,9 +475,83 @@ void test3() {
     cout << "END" << endl;
 }
 
+void test4() {
+    int a = 500;
+    int b = 12;
+    int c = 85000;
+    mblas::Matrix A = createMatrix(a, b);
+    mblas::Matrix B = createMatrix(b, c);
+    mblas::MatrixSmall As = createMatrix(a, b);
+    mblas::MatrixSmall Bs = createMatrix(b, c);
+
+    timer ti1;
+    mblas::Matrix C = A*B;
+    double elapsed_time1 = ti1.elapsed();
+
+    timer ti2;
+    mblas::MatrixSmall Cs = A*B;
+    double elapsed_time2 = ti2.elapsed();
+
+    cout << "time: " << elapsed_time1 << " x " << elapsed_time2 << endl;
+
+    show(C, 3, 3);
+    show(Cs, 3, 3);
+}
+
+void test4_2() {
+    /*
+     * Experimenting with mblas matrices
+     * rowMajor X rowMajor, and, rowMajor X columnMajor
+     */
+    int a = 500;
+    int b = 12;
+    int c = 85000;
+    mblas::Matrix A = createMatrix(a, b);
+    mblas::Matrix B = createMatrix(b, c);
+    mblas::Matrix Ac = createMatrix(a, b);
+    mblas::MatrixCol Bc = createMatrix(b, c);
+
+    timer ti1;
+    mblas::Matrix C = A*B;
+    double elapsed_time1 = ti1.elapsed();
+
+    timer ti2;
+    mblas::Matrix Cc = Ac*Bc;
+    double elapsed_time2 = ti2.elapsed();
+
+    cout << "time: " << elapsed_time1 << " x " << elapsed_time2 << endl;
+
+}
+
+
+void test5() {
+    int a = 500;
+    int b = 12;
+    int c = 85000;
+    mblas::Matrix A = createMatrix(a, b);
+    mblas::Matrix B = createMatrix(b, c);
+
+
+    timer tm1;
+    mblas::Matrix C = A*B;
+    double elapsed_time1 = tm1.elapsed();
+
+    timer tm2;
+    mblas::Softmax(C);
+    double elapsed_time2 = tm2.elapsed();
+
+    cout << "time: " << elapsed_time1 << " x " << elapsed_time2 << endl;
+
+
+    timer ti1;
+}
+
 int main(){
 
     test3();
+
+
+
 
 
 

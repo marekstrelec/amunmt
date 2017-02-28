@@ -15,7 +15,9 @@ namespace CPU {
 
 namespace mblas {
 
+typedef blaze::DynamicMatrix<int, blaze::rowMajor> MatrixSmall;
 typedef blaze::DynamicMatrix<float, blaze::rowMajor> Matrix;
+typedef blaze::DynamicMatrix<float, blaze::columnMajor> MatrixCol;
 typedef blaze::DynamicVector<float, blaze::rowVector> Vector;
 typedef blaze::DynamicVector<float, blaze::columnVector> ColumnVector;
 
