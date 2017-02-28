@@ -27,7 +27,10 @@
 #include <TargetConditionals.h>
 #endif
 
-#include "test.h"
+#include "gemmlowp/test/test.h"
+#include "mblas/matrix.h"
+#include <random>
+#include <boost/timer.hpp>
 
 #ifndef GEMMLOWP_TEST_BIT_DEPTH_PARAMS
 #define GEMMLOWP_TEST_BIT_DEPTH_PARAMS DefaultL8R8BitDepthParams
@@ -42,7 +45,28 @@
     "Building without SSE4.2 support on SSE4.2 enabled machine, check your compiler setup!"
 #endif
 
+using namespace std;
+using namespace CPU;
+using namespace boost;
+
 namespace gemmlowp {
+
+    random_device rd; // obtain a random number from hardware
+    mt19937 eng(rd()); // seed the generator
+    uniform_real_distribution<float> distr(-2.0, 2.0); // define the range
+
+    mblas::Matrix createMatrix(int rows, int cols) {
+      mblas::Matrix A;
+      A.resize(rows, cols);
+
+      for (int i=0; i<cols; i++) {
+        for (int j=0; j<rows; j++) {
+          A(j, i) = distr(eng);
+        }
+      }
+
+      return A;
+    }
 
 double time() {
 #ifdef __APPLE__
@@ -71,57 +95,38 @@ bool operator<(const gemm_t& a, const gemm_t& b) {
           (a.depth < b.depth || (a.depth <= b.depth && (a.cols < b.cols))));
 }
 
-template <typename LhsType, typename RhsType, typename ResultType>
-double time_for_gemms(GemmContext* context, const std::vector<gemm_t>& gemms) {
+double time_for_gemms() {
   typedef std::uint8_t Scalar;
 
   // set up the matrix pool
 
-  std::size_t combined_gemm_sizes = 0;
-  for (auto gemm : gemms) {
-    int rows = gemm.rows;
-    int depth = gemm.depth;
-    int cols = gemm.cols;
-    combined_gemm_sizes +=
-        sizeof(Scalar) * (rows * depth + depth * cols + rows * cols);
+  int a = 12;
+  int b = 500;
+  int c = 85000;
+
+  std::vector<mblas::Matrix> gemms_a;
+  std::vector<mblas::Matrix> gemms_b;
+  std::vector<mblas::Matrix> gemms_res;
+  std::vector<double> times;
+
+  for (int i=0; i<3; ++i) {
+    gemms_a.push_back(createMatrix(a, b));
+    gemms_b.push_back(createMatrix(b, c));
   }
 
-  const std::size_t pool_size = 1 + min_working_set_size / combined_gemm_sizes;
-
-  std::vector<LhsType> lhs(pool_size * gemms.size());
-  std::vector<RhsType> rhs(pool_size * gemms.size());
-  std::vector<ResultType> result(pool_size * gemms.size());
-
-  for (std::size_t i = 0; i < pool_size; i++) {
-    for (std::size_t j = 0; j < gemms.size(); j++) {
-      int k = i * gemms.size() + j;
-      lhs[k].Resize(gemms[j].rows, gemms[j].depth);
-      MakeConstant(&lhs[k], 0);
-      rhs[k].Resize(gemms[j].depth, gemms[j].cols);
-      MakeConstant(&rhs[k], 0);
-      result[k].Resize(gemms[j].rows, gemms[j].cols);
-      MakeConstant(&result[k], 0);
-    }
-  }
 
   // main benchmark loop
 
   int iters_at_a_time = 1;
   float time_per_iter = 0.0f;
-  std::size_t pool_index = 0;
 
   while (true) {
     double starttime = time();
     for (int i = 0; i < iters_at_a_time; i++) {
-      for (size_t j = 0; j < gemms.size(); j++) {
-        int k = pool_index * gemms.size() + j;
-        Gemm<std::uint8_t, GEMMLOWP_TEST_BIT_DEPTH_PARAMS>(
-            context, lhs[k].const_map(), rhs[k].const_map(), &result[k].map(),
-            -75, -91, 74980, 123, 20);
-      }
-      pool_index++;
-      if (pool_index == pool_size) {
-        pool_index = 0;
+      for (int j = 0; j < gemms_a.size(); j++) {
+        timer tm1;
+        gemms_res.push_back(gemms_a[j]*gemms_b[j]);
+        times.push_back(tm1.elapsed());
       }
     }
     double endtime = time();
@@ -136,6 +141,11 @@ double time_for_gemms(GemmContext* context, const std::vector<gemm_t>& gemms) {
     iters_at_a_time *= 2;
   }
 
+  for (auto t: times){
+    std::cout << t << std::endl;
+  }
+  std::cout << std::endl;
+
   return time_per_iter;
 }
 
@@ -143,7 +153,7 @@ template <typename LhsType, typename RhsType, typename ResultType>
 double gflops_for_gemms(GemmContext* context,
                         const std::vector<gemm_t>& gemms) {
   const double time_per_iter =
-      time_for_gemms<LhsType, RhsType, ResultType>(context, gemms);
+      time_for_gemms();
   double ops = 0;
   for (auto gemm : gemms) {
     ops += 2.0 * gemm.rows * gemm.depth * gemm.cols;
@@ -169,7 +179,7 @@ void benchmark_gemm_sizes(GemmContext* context,
   double starttime = time();
   while (time() < starttime + mintime) {
     gemm_times.push_back(
-        time_for_gemms<LhsType, RhsType, ResultType>(context, gemms));
+        time_for_gemms());
   }
 
 #ifdef GEMMLOWP_TEST_PROFILE
@@ -232,9 +242,6 @@ void benchmark_small_model(GemmContext* context) {
 
   std::vector<gemm_t> small_model_gemms(num_small_model_gemms);
   for (std::size_t i = 0; i < num_small_model_gemms; i++) {
-//    small_model_gemms[i].rows = small_model_gemm_sizes[3 * i + 1];
-//    small_model_gemms[i].depth = small_model_gemm_sizes[3 * i + 2];
-//    small_model_gemms[i].cols = small_model_gemm_sizes[3 * i + 0];
     small_model_gemms[i].rows = 12;
     small_model_gemms[i].depth = 500;
     small_model_gemms[i].cols = 85000;
