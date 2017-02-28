@@ -476,8 +476,8 @@ void test3() {
 }
 
 void test4() {
-    int a = 500;
-    int b = 12;
+    int a = 12;
+    int b = 500;
     int c = 85000;
     mblas::Matrix A = createMatrix(a, b);
     mblas::Matrix B = createMatrix(b, c);
@@ -503,8 +503,8 @@ void test4_2() {
      * Experimenting with mblas matrices
      * rowMajor X rowMajor, and, rowMajor X columnMajor
      */
-    int a = 500;
-    int b = 12;
+    int a = 12;
+    int b = 500;
     int c = 85000;
     mblas::Matrix A = createMatrix(a, b);
     mblas::Matrix B = createMatrix(b, c);
@@ -525,8 +525,8 @@ void test4_2() {
 
 
 void test5() {
-    int a = 500;
-    int b = 12;
+    int a = 12;
+    int b = 500;
     int c = 85000;
     mblas::Matrix A = createMatrix(a, b);
     mblas::Matrix B = createMatrix(b, c);
@@ -548,7 +548,7 @@ void test5() {
 
 int main(){
 
-    test3();
+    test5();
 
 
 
