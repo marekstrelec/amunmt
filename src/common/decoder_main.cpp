@@ -35,6 +35,10 @@ History TranslationTask(const std::string& in, size_t taskCounter) {
 
 int main(int argc, char* argv[]) {
   God::Init(argc, argv);
+
+//  std::istringstream stream("Ahoj, jak se mas?");
+//  std::cin.rdbuf(stream.rdbuf());
+
   std::setvbuf(stdout, NULL, _IONBF, 0);
   std::setvbuf(stdin, NULL, _IONBF, 0);
   boost::timer::cpu_timer timer;

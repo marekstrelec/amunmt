@@ -12,6 +12,8 @@
 #include "common/vocab.h"
 #include <math.h>
 
+#include <boost/timer.hpp>
+
 
 namespace CPU {
 
@@ -197,25 +199,27 @@ class Decoder {
             AddBiasVector<byRow>(Probs_, FilteredB4_);
           }
 
-//            God::GetSourceVocab(0).size() << " <=> " << God::GetTargetVocab().size();
-//            God::WriteLog("histogram_in", "-------------------");
-//
-//            WriteLogMatrixSize(Probs, "Probs");
-//            WriteLogMatrix(Probs);
-//
-//            WriteLogMatrixSize(State, "State");
-//            WriteLogMatrix(State);
-//
-//            WriteLogMatrixSize(Embedding, "Embedding");
-//            WriteLogMatrix(Embedding);
-//
-//            WriteLogMatrixSize(AlignedSourceContext, "AlignedSourceContext");
-//            WriteLogMatrix(AlignedSourceContext);
-//
-//            WriteLogMatrixSize(Probs_, "Probs_");
+            // find min and max values of Probs_
+            float p_min = 9999;
+            float p_max = -9999;
+
+            for (int i = 0; i < Probs_.rows(); i++) {
+                for (int j = 0; j < Probs_.columns(); j++) {
+                    const float val = Probs_(i, j);
+                    p_min = (std::min)(p_min, val);
+                    p_max = (std::max)(p_max, val);
+                }
+            }
+
+            std::stringstream qs;
+            qs << p_min << "\t" << p_max;
+            God::WriteLog("quant_info", qs.str());
+
+
+
 
             // dump all scores
-            WriteLogBestScores(Probs_, 12);
+//            WriteLogBestScores(Probs_, 12);
 
           mblas::Softmax(Probs_);
           Probs = blaze::forEach(Probs_, Log());
@@ -317,10 +321,20 @@ class Decoder {
                   const mblas::Matrix& State,
                   const mblas::Matrix& Embeddings,
                   const mblas::Matrix& SourceContext) {
-      GetHiddenState(HiddenState_, State, Embeddings);
-      GetAlignedSourceContext(AlignedSourceContext_, HiddenState_, SourceContext);
-      GetNextState(NextState, HiddenState_, AlignedSourceContext_);
-      GetProbs(Probs, NextState, Embeddings, AlignedSourceContext_);
+        boost::timer t1;
+        GetHiddenState(HiddenState_, State, Embeddings);
+        double elapsed_time1 = t1.elapsed();
+        boost::timer t2;
+        GetAlignedSourceContext(AlignedSourceContext_, HiddenState_, SourceContext);
+        double elapsed_time2 = t2.elapsed();
+        boost::timer t3;
+        GetNextState(NextState, HiddenState_, AlignedSourceContext_);
+        double elapsed_time3 = t3.elapsed();
+        boost::timer t4;
+        GetProbs(Probs, NextState, Embeddings, AlignedSourceContext_);
+        double elapsed_time4 = t4.elapsed();
+
+//        LOG(info) << "T: " << elapsed_time1 << " x " << elapsed_time2 << " x " << elapsed_time3 << " x " << elapsed_time4;
     }
 
     void EmptyState(mblas::Matrix& State,
