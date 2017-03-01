@@ -9,8 +9,8 @@ add_library(cpumode OBJECT
   cpu/dl4mt/encoder.cpp
   cpu/dl4mt/gru.cpp
   cpu/dl4mt/model.cpp
-  cpu/decoder/encoder_decoder.cpp
-)
+  cpu/dl4mt/quant.cpp
+  cpu/decoder/encoder_decoder.cpp)
 
 add_library(libcommon OBJECT
   common/config.cpp
@@ -85,8 +85,7 @@ add_executable(
   $<TARGET_OBJECTS:libcnpy>
   $<TARGET_OBJECTS:cpumode>
   $<TARGET_OBJECTS:libcommon>
-  $<TARGET_OBJECTS:libyaml-cpp>
-)
+  $<TARGET_OBJECTS:libyaml-cpp>)
 
 add_library(amunmt SHARED
   python/amunmt.cpp

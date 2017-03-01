@@ -1,5 +1,8 @@
 #pragma once
 
+#ifndef ENCODER_DECODER_H_
+#define ENCODER_DECODER_H_
+
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
@@ -99,3 +102,5 @@ class EncoderDecoderLoader : public Loader {
 };
 
 }
+
+#endif

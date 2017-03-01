@@ -13,6 +13,7 @@
 #include <math.h>
 
 #include <boost/timer.hpp>
+#include "quant.h"
 
 
 namespace CPU {
@@ -191,7 +192,22 @@ class Decoder {
 
           auto t = blaze::forEach(T1_ + T2_ + T3_, Tanh());
 
-          if(!filtered_) {
+          if (true) {
+              // QUANTIZATION
+              mblas::Matrix dequant_result(t.rows(), w_.W4_.columns());
+              QuantizationData qd_t = Quant::get_quantized_matrix(t);
+              QuantizationData qd_w = Quant::get_quantized_matrix(w_.W4_);
+              float res_min, res_max;
+              Quant::MyFindMinMax(t * w_.W4_, &res_min, &res_max);
+              QuantizationParams result_params = Quant::ChooseQuantizationParams(res_min, res_max);
+
+              StorageMatrix uint8_result = Quant::compute_quantized_multiplication(qd_t, qd_w, result_params);
+              Quant::Dequantize(result_params, uint8_result.Storage(), &dequant_result);
+
+              Probs_ = dequant_result;
+              AddBiasVector<byRow>(Probs_, w_.B4_);
+
+          } else if (!filtered_) {
             Probs_ = t * w_.W4_;
             AddBiasVector<byRow>(Probs_, w_.B4_);
           } else {
@@ -199,21 +215,29 @@ class Decoder {
             AddBiasVector<byRow>(Probs_, FilteredB4_);
           }
 
+
+
+
+
+
+
             // find min and max values of Probs_
-            float p_min = 9999;
-            float p_max = -9999;
+//            float p_min = 9999;
+//            float p_max = -9999;
+//
+//            for (int i = 0; i < Probs_.rows(); i++) {
+//                for (int j = 0; j < Probs_.columns(); j++) {
+//                    const float val = Probs_(i, j);
+//                    p_min = (std::min)(p_min, val);
+//                    p_max = (std::max)(p_max, val);
+//                }
+//            }
+//
+//            std::stringstream qs;
+//            qs << p_min << "\t" << p_max;
+//            God::WriteLog("quant_info", qs.str());
 
-            for (int i = 0; i < Probs_.rows(); i++) {
-                for (int j = 0; j < Probs_.columns(); j++) {
-                    const float val = Probs_(i, j);
-                    p_min = (std::min)(p_min, val);
-                    p_max = (std::max)(p_max, val);
-                }
-            }
 
-            std::stringstream qs;
-            qs << p_min << "\t" << p_max;
-            God::WriteLog("quant_info", qs.str());
 
 
 
