@@ -200,11 +200,19 @@ class Decoder {
               QuantizationData qd_t = Quant::get_quantized_matrix(t);
               ss << tm1.elapsed() << " x ";
 
-              boost::timer tm2;
-              float res_min, res_max;
-              Quant::MyFindMinMax(t * w_.W4_, &res_min, &res_max);
-              QuantizationParams result_params = Quant::ChooseQuantizationParams(res_min, res_max);
-              ss << tm2.elapsed() << " x ";
+//              boost::timer tm2;
+//              float res_min, res_max;
+//              Quant::MyFindMinMax(t * w_.W4_, &res_min, &res_max);
+//              QuantizationParams result_params = Quant::ChooseQuantizationParams(res_min, res_max);
+//              ss << tm2.elapsed() << " x ";
+
+//              float res_min = -20.f;
+//              float res_max = 25.f;
+//              QuantizationParams result_params = Quant::ChooseQuantizationParams(res_min, res_max);
+              QuantizationParams result_params;
+              result_params.scale = 0.176471;
+              result_params.zero_point = 113;
+
 
               boost::timer tm3;
               StorageMatrix uint8_result = Quant::compute_quantized_multiplication(qd_t, w_.W4_quant, result_params);
