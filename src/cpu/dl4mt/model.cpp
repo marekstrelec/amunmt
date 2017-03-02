@@ -1,4 +1,5 @@
 #include "model.h"
+#include "quant.h"
 
 using namespace std;
 
@@ -55,7 +56,8 @@ Weights::DecSoftmax::DecSoftmax(const NpzConverter& model)
   W3_(model["ff_logit_ctx_W"]),
   B3_(model("ff_logit_ctx_b", true)),
   W4_(model["ff_logit_W"]),
-  B4_(model("ff_logit_b", true))
+  B4_(model("ff_logit_b", true)),
+  W4_quant(Quant::get_quantized_matrix(model["ff_logit_W"]))
 {}
 
 //////////////////////////////////////////////////////////////////////////////

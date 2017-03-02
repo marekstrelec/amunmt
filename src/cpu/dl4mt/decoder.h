@@ -193,19 +193,27 @@ class Decoder {
           auto t = blaze::forEach(T1_ + T2_ + T3_, Tanh());
 
           if (true) {
+              std::stringstream ss;
               // QUANTIZATION
+              boost::timer tm1;
               mblas::Matrix dequant_result(t.rows(), w_.W4_.columns());
               QuantizationData qd_t = Quant::get_quantized_matrix(t);
-              QuantizationData qd_w = Quant::get_quantized_matrix(w_.W4_);
+              ss << tm1.elapsed() << " x ";
+
+              boost::timer tm2;
               float res_min, res_max;
               Quant::MyFindMinMax(t * w_.W4_, &res_min, &res_max);
               QuantizationParams result_params = Quant::ChooseQuantizationParams(res_min, res_max);
+              ss << tm2.elapsed() << " x ";
 
-              StorageMatrix uint8_result = Quant::compute_quantized_multiplication(qd_t, qd_w, result_params);
+              boost::timer tm3;
+              StorageMatrix uint8_result = Quant::compute_quantized_multiplication(qd_t, w_.W4_quant, result_params);
               Quant::Dequantize(result_params, uint8_result.Storage(), &dequant_result);
+              ss << tm3.elapsed() << " x ";
 
               Probs_ = dequant_result;
               AddBiasVector<byRow>(Probs_, w_.B4_);
+//              God::WriteLog("quant_info", ss.str());
 
           } else if (!filtered_) {
             Probs_ = t * w_.W4_;
@@ -214,9 +222,6 @@ class Decoder {
             Probs_ = t * FilteredW4_;
             AddBiasVector<byRow>(Probs_, FilteredB4_);
           }
-
-
-
 
 
 

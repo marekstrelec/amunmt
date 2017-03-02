@@ -31,7 +31,7 @@ const auto kOrder = gemmlowp::MapOrder::ColMajor;
 
 string Quant::show(mblas::Matrix A, int row, int col) {
     row = min(row, static_cast<int>(A.rows()));
-     col = min(col, static_cast<int>(A.columns()));
+    col = min(col, static_cast<int>(A.columns()));
 
     std::stringstream ss;
     for (int i = 0; i < row; i++) {

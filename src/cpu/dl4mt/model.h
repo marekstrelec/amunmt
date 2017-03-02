@@ -7,6 +7,7 @@
 #include "../npz_converter.h"
 
 #include "../mblas/matrix.h"
+#include "quant.h"
 
 namespace CPU {
 
@@ -74,6 +75,7 @@ struct Weights {
     const mblas::Matrix B3_;
     const mblas::Matrix W4_;
     const mblas::Matrix B4_;
+    const QuantizationData W4_quant;
   };
 
   //////////////////////////////////////////////////////////////////////////////
